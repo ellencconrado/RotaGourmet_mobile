@@ -35,6 +35,9 @@
         }
       ]
     ],
+    "extra": {
+      "pagesDir": "src/app"
+    },
     "experiments": {
       "typedRoutes": true
     }
