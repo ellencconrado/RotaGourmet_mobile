@@ -8,6 +8,7 @@ import {
 import { Image } from "expo-image";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+//import logo from "@assets/logo.png";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function LoginScreen() {
       <Image
         style={styles.image}
         contentFit="cover"
-        source={require("../../assets/logo.png")}
+        source={require("../assets/logo.png")}
       />
       <Ionicons
         name="person-outline"
