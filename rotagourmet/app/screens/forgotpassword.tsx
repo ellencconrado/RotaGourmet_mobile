@@ -9,9 +9,6 @@ import {
 export default function ForgotPassword() {
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Esqueceu a Senha</Text>
-      </View>
       <Text style={styles.info}>Email/ Telefone:</Text>
       <TextInput style={styles.input} />
       <Text style={styles.info}>
