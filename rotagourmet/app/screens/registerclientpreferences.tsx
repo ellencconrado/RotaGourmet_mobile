@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { ScrollView, View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
 import { Picker } from "@react-native-picker/picker";
+import { useRouter } from "expo-router";
 
 export default function RegisterClientPreferencesScreen() {
+  const router = useRouter();
   const [preference, setPreference] = useState("");
   const [alergias, setAlergias] = useState("");
 
@@ -36,7 +38,11 @@ export default function RegisterClientPreferencesScreen() {
       <Label text="Observação Alérgicas:" />
       <TextInput style={styles.input} value={alergias} onChangeText={setAlergias} />
 
-      <TouchableOpacity style={[styles.button, !valid && { opacity: 0.5 }]} disabled={!valid}>
+      <TouchableOpacity
+        style={[styles.button, !valid && { opacity: 0.5 }]}
+        disabled={!valid}
+        onPress={() => router.push("/screens/registerfinal?type=client")}
+      >
         <Text style={styles.buttonlabel}>Próximo</Text>
       </TouchableOpacity>
 

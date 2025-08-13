@@ -4,61 +4,191 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  SafeAreaView,
+  Alert,
 } from "react-native";
+import { useRouter } from "expo-router";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useState, useRef } from "react";
 
 export default function ForgotPassword() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState(["", "", "", "", ""]);
+  const codeRefs = useRef<TextInput[]>([]);
+
+  const handleCodeChange = (text: string, index: number) => {
+    const newCode = [...code];
+    newCode[index] = text;
+    setCode(newCode);
+
+    // Auto-focus next input
+    if (text && index < 4) {
+      codeRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleSend = () => {
+    if (!email.trim()) {
+      Alert.alert("Atenção", "Por favor, informe seu email ou telefone.");
+      return;
+    }
+
+    // Verifica se o código foi preenchido
+    const isCodeComplete = code.every(digit => digit.trim() !== "");
+    if (!isCodeComplete) {
+      Alert.alert("Atenção", "Por favor, preencha o código de confirmação completo.");
+      return;
+    }
+
+    // Aqui você implementaria a verificação do código
+    // Por enquanto, vamos simular que o código foi aceito
+    Alert.alert("Sucesso", "Código verificado! Agora defina sua nova senha.", [
+      {
+        text: "OK",
+        onPress: () => router.push("/screens/newpassword"),
+      },
+    ]);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.info}>Email/ Telefone:</Text>
-      <TextInput style={styles.input} />
-      <Text style={styles.info}>
-        Enviaremos um código de confirmação para seu email:
-      </Text>
-      <TextInput style={styles.input} />
-      <TouchableOpacity style={styles.button}>
-        <Text style={styles.buttonlabel}>Enviar</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Esqueceu a senha</Text>
+      </View>
+
+      {/* Content */}
+      <View style={styles.content}>
+        <Text style={styles.label}>Email / Telefone:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite seu email ou telefone"
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+
+        <Text style={styles.instruction}>
+          Enviaremos um código de confirmação para seu email
+        </Text>
+
+        {/* Code Input Fields */}
+        <View style={styles.codeContainer}>
+          {code.map((digit, index) => (
+            <TextInput
+              key={index}
+              ref={(ref) => {
+                if (ref) codeRefs.current[index] = ref;
+              }}
+              style={styles.codeInput}
+              value={digit}
+              onChangeText={(text) => handleCodeChange(text, index)}
+              maxLength={1}
+              keyboardType="number-pad"
+              textAlign="center"
+              onKeyPress={({ nativeEvent }) => {
+                if (nativeEvent.key === 'Backspace' && !digit && index > 0) {
+                  codeRefs.current[index - 1]?.focus();
+                }
+              }}
+            />
+          ))}
+        </View>
+
+        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+          <Text style={styles.sendButtonText}>Enviar</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 50,
+    backgroundColor: "#fff",
   },
   header: {
     backgroundColor: "#C65323",
-    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    paddingTop: 50,
   },
-  title: {
+  backButton: {
+    marginRight: 15,
+  },
+  headerTitle: {
     color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 30,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#333",
   },
   input: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#F5F5F5",
     width: "100%",
-    paddingVertical: 10,
-    paddingLeft: 20,
-    margin: 10,
-    borderRadius: 20,
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
+    height: 50,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    fontSize: 16,
+    marginBottom: 25,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
   },
-  info: {
-    fontWeight: "bold",
-    textAlign: "right",
-  },
-  button: {
-    backgroundColor: "#C65323",
-    marginVertical: 20,
-    padding: 10,
-    width: "30%",
-    borderRadius: 20,
-  },
-  buttonlabel: {
+  instruction: {
+    fontSize: 14,
+    color: "#666",
     textAlign: "center",
-    color: "#fff",
+    marginBottom: 30,
+    lineHeight: 20,
+  },
+  codeContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 40,
+    gap: 10,
+  },
+  codeInput: {
+    width: 50,
+    height: 50,
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    fontSize: 20,
     fontWeight: "bold",
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  sendButton: {
+    backgroundColor: "#C65323",
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    alignSelf: "center",
+    minWidth: 120,
+  },
+  sendButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

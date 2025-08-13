@@ -24,11 +24,23 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
-         <Stack.Screen
+        <Stack.Screen
+          name="screens/splash"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="screens/loginscreen"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="screens/registertype"
           options={{ title: "Cadastro" }}
         />
-         <Stack.Screen
+        <Stack.Screen
           name="screens/forgotpassword"
           options={{ title: "Esqueci a Senha" }}
         />
@@ -48,7 +60,14 @@ export default function RootLayout() {
           name="screens/registerclientpreferences"
           options={{ title: "Cadastro" }}
         />
-       {/*  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />*/}
+        <Stack.Screen
+          name="screens/newpassword"
+          options={{ title: "Nova Senha" }}
+        />
+        <Stack.Screen
+          name="screens/registerfinal"
+          options={{ title: "Finalizar Cadastro" }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

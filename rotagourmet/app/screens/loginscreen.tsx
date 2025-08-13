@@ -22,7 +22,6 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
-//import logo from "@assets/logo.png";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -33,6 +32,12 @@ export default function LoginScreen() {
 
   WebBrowser.maybeCompleteAuthSession();
   const redirectUri = makeRedirectUri({ useProxy: true });
+
+  // Check if Google auth is properly configured
+  const hasGoogleConfig = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+    process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
+    process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
+
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
@@ -51,7 +56,7 @@ export default function LoginScreen() {
     try {
       setLoading(true);
       await signInWithEmailAndPassword(auth, email.trim(), password);
-      router.replace("/(tabs)/location");
+      router.replace("/home");
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar. Verifique suas credenciais.";
       Alert.alert("Erro ao entrar", message);
@@ -61,11 +66,16 @@ export default function LoginScreen() {
   }
 
   async function handleGoogleWeb() {
+    if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
+      Alert.alert("Erro", "Google Auth não está configurado para web. Configure EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.");
+      return;
+    }
+
     try {
       setGoogleLoading(true);
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      router.replace("/(tabs)/location");
+      router.replace("/home");
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
       Alert.alert("Erro", message);
@@ -75,6 +85,11 @@ export default function LoginScreen() {
   }
 
   async function handleGoogleNative() {
+    if (!request) {
+      Alert.alert("Erro", "Google Auth não está configurado para dispositivos móveis.");
+      return;
+    }
+
     try {
       setGoogleLoading(true);
       const result = await promptAsync();
@@ -84,7 +99,7 @@ export default function LoginScreen() {
       if (!idToken && !accessToken) throw new Error("Não foi possível obter o token do Google.");
       const credential = GoogleAuthProvider.credential(idToken, accessToken);
       await signInWithCredential(auth, credential);
-      router.replace("/(tabs)/location");
+      router.replace("/home");
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
       Alert.alert("Erro", message);
@@ -99,6 +114,7 @@ export default function LoginScreen() {
       // Tratado em handleGoogleNative após promptAsync.
     }
   }, [response]);
+
   return (
     <View style={styles.container}>
       <Image
@@ -108,7 +124,7 @@ export default function LoginScreen() {
       />
       <Ionicons
         name="person-outline"
-        margin={20}
+        style={styles.icon}
         size={150}
         color={"#C65323"}
       />
@@ -137,76 +153,89 @@ export default function LoginScreen() {
       <TouchableOpacity onPress={() => router.push("/screens/forgotpassword")}>
         <Text style={styles.link}>Esqueceu a senha?</Text>
       </TouchableOpacity>
-      <View style={styles.providersRow}>
-        <TouchableOpacity
-          style={styles.socialButton}
-          disabled={googleLoading || (Platform.OS !== "web" && !request)}
-          onPress={Platform.OS === "web" ? handleGoogleWeb : handleGoogleNative}
-        >
-          {googleLoading ? (
-            <ActivityIndicator color="#C65323" />
-          ) : (
-            <Ionicons name="logo-google" size={26} color="#C65323" />
-          )}
-        </TouchableOpacity>
-      </View>
+
+      {hasGoogleConfig && (
+        <View style={styles.providersRow}>
+          <TouchableOpacity
+            style={styles.socialButton}
+            disabled={googleLoading || (Platform.OS !== "web" && !request)}
+            onPress={Platform.OS === "web" ? handleGoogleWeb : handleGoogleNative}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#C65323" />
+            ) : (
+              <Ionicons name="logo-google" size={26} color="#C65323" />
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       <TouchableOpacity onPress={() => router.push("/screens/registertype")}>
         <Text style={styles.link}>Criar conta</Text>
       </TouchableOpacity>
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 50,
+    padding: 20,
+    backgroundColor: "#fff",
   },
   image: {
-    flex: 1,
-    width: "100%",
+    width: 200,
+    height: 100,
+    marginBottom: 20,
+  },
+  icon: {
+    marginBottom: 20,
   },
   input: {
-    backgroundColor: "#D9D9D9",
     width: "100%",
-    paddingVertical: 10,
-    paddingLeft: 20,
-    margin: 10,
-    borderRadius: 20,
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    fontSize: 16,
   },
   button: {
+    width: "100%",
+    height: 50,
     backgroundColor: "#C65323",
-    marginVertical: 20,
-    padding: 10,
-    width: "30%",
-    borderRadius: 20,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 15,
   },
   buttonlabel: {
-    textAlign: "center",
     color: "#fff",
+    fontSize: 16,
     fontWeight: "bold",
   },
   link: {
     color: "#C65323",
-    fontWeight: "bold",
-    marginTop: 20,
+    fontSize: 16,
+    marginBottom: 15,
+    textDecorationLine: "underline",
   },
   providersRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
-    marginTop: 10,
-    gap: 16,
+    marginBottom: 15,
   },
   socialButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "#C65323",
     justifyContent: "center",
-    backgroundColor: "#EFEFEF",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
 });

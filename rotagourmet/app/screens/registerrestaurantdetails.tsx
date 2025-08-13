@@ -3,8 +3,10 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView 
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
+import { useRouter } from "expo-router";
 
 export default function RegisterRestaurantDetailsScreen() {
+  const router = useRouter();
   const [logoUri, setLogoUri] = useState<string | null>(null);
   const [cuisine, setCuisine] = useState<string>("");
   const [descricao, setDescricao] = useState("");
@@ -48,7 +50,7 @@ export default function RegisterRestaurantDetailsScreen() {
       Alert.alert("Atenção", "Preencha os campos obrigatórios (Logo e Tipo de Culinária)." );
       return;
     }
-    Alert.alert("Sucesso", "Dados coletados. Próximo passo do cadastro.");
+    router.push("/screens/registerrestaurantoperational");
   }
 
   return (
