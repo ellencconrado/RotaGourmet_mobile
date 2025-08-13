@@ -25,8 +25,28 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
          <Stack.Screen
+          name="screens/registertype"
+          options={{ title: "Cadastro" }}
+        />
+         <Stack.Screen
           name="screens/forgotpassword"
           options={{ title: "Esqueci a Senha" }}
+        />
+        <Stack.Screen
+          name="screens/registerrestaurant"
+          options={{ title: "Cadastro" }}
+        />
+        <Stack.Screen
+          name="screens/registerrestaurantdetails"
+          options={{ title: "Cadastro" }}
+        />
+        <Stack.Screen
+          name="screens/registerclient"
+          options={{ title: "Cadastro" }}
+        />
+        <Stack.Screen
+          name="screens/registerclientpreferences"
+          options={{ title: "Cadastro" }}
         />
        {/*  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />*/}
         <Stack.Screen name="+not-found" />
