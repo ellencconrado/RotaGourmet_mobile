@@ -37,6 +37,22 @@ export default function RootLayout() {
           options={{ headerShown: false }}
         />
         <Stack.Screen
+          name="screens/profile"
+          options={{ title: "Perfil" }}
+        />
+        <Stack.Screen
+          name="screens/notifications"
+          options={{ title: "Notificações" }}
+        />
+        <Stack.Screen
+          name="screens/contact"
+          options={{ title: "Fale Conosco", headerShown: false }}
+        />
+        <Stack.Screen
+          name="screens/plan"
+          options={{ title: "Plano de Vínculo", headerShown: false }}
+        />
+        <Stack.Screen
           name="screens/registertype"
           options={{ title: "Cadastro" }}
         />

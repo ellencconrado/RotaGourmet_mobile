@@ -51,7 +51,7 @@ export default function RegisterFinalScreen() {
             [
                 {
                     text: "OK",
-                    onPress: () => router.push("/(tabs)")
+                    onPress: () => router.push("/(tabs)/home" as any)
                 }
             ]
         );

@@ -1,16 +1,31 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Pressable } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
-    const [searchText, setSearchText] = useState("");
+	const [searchText, setSearchText] = useState("");
+	const [isMenuOpen, setIsMenuOpen] = useState(false);
+	const router = useRouter();
+
+	const navigateTo = (href: string) => {
+		// Tipagem do Expo Router pode não refletir imediatamente novas rotas geradas.
+		// Usamos um wrapper para evitar erros de tipagem durante o desenvolvimento.
+		router.push(href as any);
+	};
 
     // Dados mockados para demonstração
-    const rotasGastronomicas = [
-        { id: 1, nome: "Rota das Cervejas", cor: "#FF0000" },
-        { id: 2, nome: "Rota das Vinícolas", cor: "#FF0000" },
-        { id: 3, nome: "Criar Rota Gastronômica", isCreate: true }
-    ];
+	const rotasGastronomicas = [
+		{ id: 1, nome: "Rota das Cervejas", cor: "#FF0000" },
+		{ id: 2, nome: "Rota das Vinícolas", cor: "#FF0000" },
+		{ id: 3, nome: "Criar Rota Gastronômica", isCreate: true }
+	];
+
+	// Mapeia o card selecionado para uma categoria de filtro na tela de Localização
+	const rotaToCategoryMap: Record<string, string> = {
+		"Rota das Cervejas": "Churrasco",
+		"Rota das Vinícolas": "Japonesa",
+	};
 
     const todosRestaurantes = [
         { id: 1, nome: "Restaurante Italiano", tipo: "Italiana", avaliacao: 4.5, preco: "$$" },
@@ -27,9 +42,7 @@ export default function HomeScreen() {
         )
         : todosRestaurantes;
 
-    const mapsGourmet = [
-        // Aqui você pode adicionar mapas/rotas
-    ];
+
 
     return (
         <View style={styles.container}>
@@ -42,10 +55,59 @@ export default function HomeScreen() {
                     <Text style={styles.logoText}>ROTA GOURMET</Text>
                     <Text style={styles.tagline}>EXPERIÊNCIAS GASTRONÔMICAS</Text>
                 </View>
-                <TouchableOpacity style={styles.menuButton}>
+				<TouchableOpacity style={styles.menuButton} onPress={() => setIsMenuOpen((prev) => !prev)}>
                     <Ionicons name="menu" size={24} color="#fff" />
                 </TouchableOpacity>
             </View>
+
+			{/* Menu Hambúrguer */}
+			{isMenuOpen && (
+				<>
+					<Pressable style={styles.menuBackdrop} onPress={() => setIsMenuOpen(false)} />
+					<View style={styles.dropdownMenu}>
+						<TouchableOpacity
+							style={styles.menuItem}
+							onPress={() => {
+								setIsMenuOpen(false);
+								navigateTo("/screens/profile");
+							}}
+						>
+							<Ionicons name="person" size={18} color="#fff" style={styles.menuItemIcon} />
+							<Text style={styles.menuItemText}>Perfil</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={styles.menuItem}
+							onPress={() => {
+								setIsMenuOpen(false);
+								navigateTo("/screens/notifications");
+							}}
+						>
+							<Ionicons name="notifications" size={18} color="#fff" style={styles.menuItemIcon} />
+							<Text style={styles.menuItemText}>Notificações</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={styles.menuItem}
+							onPress={() => {
+								setIsMenuOpen(false);
+								navigateTo("/screens/contact");
+							}}
+						>
+							<Ionicons name="chatbubble-ellipses" size={18} color="#fff" style={styles.menuItemIcon} />
+							<Text style={styles.menuItemText}>Fale Conosco</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={[styles.menuItem, styles.menuItemLast]}
+							onPress={() => {
+								setIsMenuOpen(false);
+								navigateTo("/screens/plan");
+							}}
+						>
+							<Ionicons name="link" size={18} color="#fff" style={styles.menuItemIcon} />
+							<Text style={styles.menuItemText}>Plano de Vínculo</Text>
+						</TouchableOpacity>
+					</View>
+				</>
+			)}
 
             {/* Barra de Pesquisa */}
             <View style={styles.searchContainer}>
@@ -69,10 +131,22 @@ export default function HomeScreen() {
                         {rotasGastronomicas.map((rota) => (
                             <TouchableOpacity
                                 key={rota.id}
-                                style={[
+							style={[
                                     styles.rotaCard,
                                     rota.isCreate && styles.createRotaCard
-                                ]}
+							]}
+							onPress={() => {
+								const category = rotaToCategoryMap[rota.nome as keyof typeof rotaToCategoryMap];
+								if (rota.isCreate) {
+									navigateTo("/(tabs)/location");
+									return;
+								}
+								if (category) {
+									navigateTo(`/(tabs)/location?category=${encodeURIComponent(category)}`);
+								} else {
+									navigateTo("/(tabs)/location");
+								}
+							}}
                             >
                                 {rota.isCreate ? (
                                     <>
@@ -176,6 +250,47 @@ const styles = StyleSheet.create({
     menuButton: {
         padding: 8,
     },
+		menuBackdrop: {
+			position: "absolute",
+			top: 0,
+			left: 0,
+			right: 0,
+			bottom: 0,
+			backgroundColor: "transparent",
+			zIndex: 9,
+		},
+		dropdownMenu: {
+			position: "absolute",
+			top: 90,
+			right: 16,
+			backgroundColor: "#C65323",
+			borderRadius: 12,
+			paddingVertical: 8,
+			minWidth: 190,
+			zIndex: 10,
+			shadowColor: "#000",
+			shadowOffset: { width: 0, height: 4 },
+			shadowOpacity: 0.2,
+			shadowRadius: 6,
+			elevation: 8,
+		},
+		menuItem: {
+			flexDirection: "row",
+			alignItems: "center",
+			paddingVertical: 10,
+			paddingHorizontal: 14,
+		},
+		menuItemLast: {
+			paddingBottom: 12,
+		},
+		menuItemIcon: {
+			marginRight: 10,
+		},
+		menuItemText: {
+			color: "#fff",
+			fontSize: 14,
+			fontWeight: "600",
+		},
     searchContainer: {
         paddingHorizontal: 16,
         paddingVertical: 16,

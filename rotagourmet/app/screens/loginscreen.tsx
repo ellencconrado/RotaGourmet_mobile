@@ -6,19 +6,19 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-import { Platform } from "react-native";
 import {
+  signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithCredential,
 } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
@@ -31,18 +31,20 @@ export default function LoginScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   WebBrowser.maybeCompleteAuthSession();
-  const redirectUri = makeRedirectUri({ useProxy: true });
 
   // Check if Google auth is properly configured
   const hasGoogleConfig = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
     process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
     process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
+  const redirectUri = makeRedirectUri({ useProxy: true });
+
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+    // Em Expo Go use apenas expoClientId. Em builds nativas, forneça os ids específicos.
     expoClientId: process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
     responseType: "id_token",
     scopes: ["profile", "email"],
     redirectUri,
@@ -92,7 +94,8 @@ export default function LoginScreen() {
 
     try {
       setGoogleLoading(true);
-      const result = await promptAsync();
+      // useProxy garante redirecionamento válido no Expo Go e emuladores
+      const result = await promptAsync({ useProxy: true });
       if (!result?.type || result.type !== "success") return;
       const idToken = (result as any)?.authentication?.idToken;
       const accessToken = (result as any)?.authentication?.accessToken;

@@ -43,7 +43,7 @@ export default function NewPasswordScreen() {
         Alert.alert("Sucesso", "Senha alterada com sucesso!", [
             {
                 text: "OK",
-                onPress: () => router.replace("/(tabs)"), // Volta para a tela principal
+                onPress: () => router.replace("/(tabs)/home" as any), // Volta para a Home
             },
         ]);
     };

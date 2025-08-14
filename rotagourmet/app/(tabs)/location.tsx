@@ -1,3 +1,4 @@
+import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 
@@ -24,3 +25,5 @@ const styles = StyleSheet.create({
     color: "#333",
   },
 });
+
+
