@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState, useRef } from "react";
+import { globalStyles } from "../styles/global";
 
 export default function ForgotPassword() {
   const router = useRouter();
@@ -35,9 +36,12 @@ export default function ForgotPassword() {
     }
 
     // Verifica se o código foi preenchido
-    const isCodeComplete = code.every(digit => digit.trim() !== "");
+    const isCodeComplete = code.every((digit) => digit.trim() !== "");
     if (!isCodeComplete) {
-      Alert.alert("Atenção", "Por favor, preencha o código de confirmação completo.");
+      Alert.alert(
+        "Atenção",
+        "Por favor, preencha o código de confirmação completo."
+      );
       return;
     }
 
@@ -52,19 +56,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="white" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Esqueceu a senha</Text>
-      </View>
-
-      {/* Content */}
+    <SafeAreaView style={globalStyles.container}>
       <View style={styles.content}>
         <Text style={styles.label}>Email / Telefone:</Text>
         <TextInput
@@ -95,7 +87,7 @@ export default function ForgotPassword() {
               keyboardType="number-pad"
               textAlign="center"
               onKeyPress={({ nativeEvent }) => {
-                if (nativeEvent.key === 'Backspace' && !digit && index > 0) {
+                if (nativeEvent.key === "Backspace" && !digit && index > 0) {
                   codeRefs.current[index - 1]?.focus();
                 }
               }}
@@ -112,18 +104,6 @@ export default function ForgotPassword() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  header: {
-    backgroundColor: "#C65323",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    paddingTop: 50,
-  },
   backButton: {
     marginRight: 15,
   },
