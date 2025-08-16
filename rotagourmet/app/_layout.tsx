@@ -8,6 +8,8 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
+import { StyleSheet } from "react-native";
+
 import { useColorScheme } from "@/hooks/useColorScheme";
 
 export default function RootLayout() {
@@ -23,23 +25,20 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen
-          name="screens/splash"
-          options={{ headerShown: false }}
-        />
+      <Stack
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: "#C65323",
+          },
+        }}
+      >
+        <Stack.Screen name="screens/splash" options={{ headerShown: false }} />
         <Stack.Screen
           name="screens/loginscreen"
           options={{ headerShown: false }}
         />
-        <Stack.Screen
-          name="(tabs)"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="screens/profile"
-          options={{ title: "Perfil" }}
-        />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="screens/profile" options={{ title: "Perfil" }} />
         <Stack.Screen
           name="screens/notifications"
           options={{ title: "Notificações" }}

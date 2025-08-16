@@ -22,6 +22,7 @@ import { auth } from "@/lib/firebase";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
+import { globalStyles } from "../styles/global";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -33,7 +34,8 @@ export default function LoginScreen() {
   WebBrowser.maybeCompleteAuthSession();
 
   // Check if Google auth is properly configured
-  const hasGoogleConfig = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
+  const hasGoogleConfig =
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
     process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ||
     process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;
 
@@ -60,7 +62,8 @@ export default function LoginScreen() {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       router.replace("/home");
     } catch (error: any) {
-      const message = error?.message || "Falha ao entrar. Verifique suas credenciais.";
+      const message =
+        error?.message || "Falha ao entrar. Verifique suas credenciais.";
       Alert.alert("Erro ao entrar", message);
     } finally {
       setLoading(false);
@@ -69,7 +72,10 @@ export default function LoginScreen() {
 
   async function handleGoogleWeb() {
     if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
-      Alert.alert("Erro", "Google Auth não está configurado para web. Configure EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID.");
+      Alert.alert(
+        "Erro",
+        "Google Auth não está configurado para web. Configure EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID."
+      );
       return;
     }
 
@@ -88,7 +94,10 @@ export default function LoginScreen() {
 
   async function handleGoogleNative() {
     if (!request) {
-      Alert.alert("Erro", "Google Auth não está configurado para dispositivos móveis.");
+      Alert.alert(
+        "Erro",
+        "Google Auth não está configurado para dispositivos móveis."
+      );
       return;
     }
 
@@ -99,7 +108,8 @@ export default function LoginScreen() {
       if (!result?.type || result.type !== "success") return;
       const idToken = (result as any)?.authentication?.idToken;
       const accessToken = (result as any)?.authentication?.accessToken;
-      if (!idToken && !accessToken) throw new Error("Não foi possível obter o token do Google.");
+      if (!idToken && !accessToken)
+        throw new Error("Não foi possível obter o token do Google.");
       const credential = GoogleAuthProvider.credential(idToken, accessToken);
       await signInWithCredential(auth, credential);
       router.replace("/home");
@@ -119,18 +129,13 @@ export default function LoginScreen() {
   }, [response]);
 
   return (
-    <View style={styles.container}>
+    <View style={globalStyles.container}>
       <Image
-        style={styles.image}
+        style={globalStyles.logo}
         contentFit="cover"
         source={require("../assets/logo.png")}
       />
-      <Ionicons
-        name="person-outline"
-        style={styles.icon}
-        size={150}
-        color={"#C65323"}
-      />
+      <Ionicons name="person-outline" style={styles.icon} />
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -146,7 +151,11 @@ export default function LoginScreen() {
         value={password}
         onChangeText={setPassword}
       />
-      <TouchableOpacity style={styles.button} disabled={loading} onPress={handleLogin}>
+      <TouchableOpacity
+        style={styles.button}
+        disabled={loading}
+        onPress={handleLogin}
+      >
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
@@ -162,7 +171,9 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={styles.socialButton}
             disabled={googleLoading || (Platform.OS !== "web" && !request)}
-            onPress={Platform.OS === "web" ? handleGoogleWeb : handleGoogleNative}
+            onPress={
+              Platform.OS === "web" ? handleGoogleWeb : handleGoogleNative
+            }
           >
             {googleLoading ? (
               <ActivityIndicator color="#C65323" />
@@ -181,20 +192,10 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    backgroundColor: "#fff",
-  },
-  image: {
-    width: 200,
-    height: 100,
-    marginBottom: 20,
-  },
   icon: {
     marginBottom: 20,
+    fontSize: 100,
+    color: "#C65323",
   },
   input: {
     width: "100%",
