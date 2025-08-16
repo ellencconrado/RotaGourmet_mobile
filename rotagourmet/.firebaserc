@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "rotagourmet-d588d"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }
