@@ -1,108 +1,68 @@
 import React, { useState } from "react";
-import { ScrollView, View, Text, StyleSheet, TextInput, TouchableOpacity } from "react-native";
-import { Picker } from "@react-native-picker/picker";
+import {
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { useRouter } from "expo-router";
+import { globalStyles } from "../styles/global";
+import { globalCadStyles } from "../styles/globalcad";
+import { cuisines } from "../../constants/cuisines";
+import MultiSelect from "react-native-multiple-select";
+import { defaultColor } from "@/constants/Colors";
 
 export default function RegisterClientPreferencesScreen() {
   const router = useRouter();
-  const [preference, setPreference] = useState("");
   const [alergias, setAlergias] = useState("");
+  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
 
-  function Label({ text, required }: { text: string; required?: boolean }) {
-    return (
-      <Text style={styles.label}>
-        {required ? <Text style={styles.required}>* </Text> : null}
-        {text}
-      </Text>
-    );
+  function Label({ text }: { text: string }) {
+    return <Text style={globalCadStyles.label}>{text}</Text>;
   }
 
-  const valid = !!preference;
-
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Cliente:</Text>
+    <ScrollView
+      style={globalCadStyles.container}
+      contentContainerStyle={globalCadStyles.content}
+    >
+      <Text style={globalStyles.title}>Cliente:</Text>
 
       <Label text="Preferências gastronômicas:" />
-      <View style={styles.pickerContainer}>
-        <Picker selectedValue={preference} onValueChange={(v: string) => setPreference(v)}>
-          <Picker.Item label="Selecione as opções..." value="" color="#777" />
-          <Picker.Item label="Churrasco" value="churrasco" />
-          <Picker.Item label="Frutos do Mar" value="frutos_mar" />
-          <Picker.Item label="Massas" value="massas" />
-          <Picker.Item label="Vegano/Vegetariano" value="veg" />
-          <Picker.Item label="Doces/Sobremesas" value="doces" />
-        </Picker>
-      </View>
-
+      <MultiSelect
+        items={cuisines.map((c) => ({ id: c.toLowerCase(), name: c }))}
+        uniqueKey="id"
+        onSelectedItemsChange={(selected: string[]) =>
+          setSelectedPreferences(selected)
+        }
+        selectedItems={selectedPreferences}
+        selectText="Selecione as opções..."
+        searchInputPlaceholderText="Buscar..."
+        tagRemoveIconColor={defaultColor}
+        tagBorderColor={defaultColor}
+        tagTextColor="#000"
+        selectedItemTextColor={defaultColor}
+        selectedItemIconColor={defaultColor}
+        itemTextColor="#000"
+        displayKey="name"
+        searchInputStyle={{ color: "#777" }}
+        submitButtonColor={defaultColor}
+        submitButtonText="Confirmar"
+        styleDropdownMenu={globalCadStyles.pickerContainer} // opcional: aplica seu estilo
+      />
       <Label text="Observação Alérgicas:" />
-      <TextInput style={styles.input} value={alergias} onChangeText={setAlergias} />
+      <TextInput
+        style={globalCadStyles.input}
+        value={alergias}
+        onChangeText={setAlergias}
+      />
 
       <TouchableOpacity
-        style={[styles.button, !valid && { opacity: 0.5 }]}
-        disabled={!valid}
+        style={globalStyles.button}
         onPress={() => router.push("/screens/registerfinal?type=client")}
       >
-        <Text style={styles.buttonlabel}>Próximo</Text>
+        <Text style={globalStyles.buttonlabel}>Próximo</Text>
       </TouchableOpacity>
-
-      <Text style={styles.legend}><Text style={styles.required}>*</Text> Campo Obrigatório</Text>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  title: {
-    fontWeight: "bold",
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  required: {
-    color: "#C65323",
-  },
-  input: {
-    backgroundColor: "#D9D9D9",
-    paddingVertical: 10,
-    paddingLeft: 16,
-    borderRadius: 20,
-  },
-  pickerContainer: {
-    backgroundColor: "#D9D9D9",
-    borderRadius: 20,
-    overflow: "hidden",
-  },
-  button: {
-    alignSelf: "flex-start",
-    backgroundColor: "#C65323",
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  buttonlabel: {
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  legend: {
-    alignSelf: "flex-end",
-    marginTop: 12,
-    fontSize: 11,
-  },
-});
-
-

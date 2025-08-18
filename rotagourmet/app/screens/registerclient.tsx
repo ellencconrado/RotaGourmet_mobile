@@ -1,6 +1,15 @@
-import React, { useState } from "react";
-import { ScrollView, View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  ScrollView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { useRouter } from "expo-router";
+import { globalStyles } from "../styles/global";
+import { globalCadStyles } from "../styles/globalcad";
+import { Picker } from "@react-native-picker/picker";
 
 export default function RegisterClientScreen() {
   const router = useRouter();
@@ -11,136 +20,188 @@ export default function RegisterClientScreen() {
   const [endereco, setEndereco] = useState("");
   const [bairro, setBairro] = useState("");
   const [numero, setNumero] = useState("");
-  const [municipioUf, setMunicipioUf] = useState("");
+
+  const [estados, setEstados] = useState<any[]>([]);
+  const [municipios, setMunicipios] = useState<any[]>([]);
+  const [estadoSelecionado, setEstadoSelecionado] = useState("");
+  const [municipioSelecionado, setMunicipioSelecionado] = useState("");
+
+  // Carrega estados ao iniciar
+  useEffect(() => {
+    fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados")
+      .then((res) => res.json())
+      .then((data) => {
+        // ordena por nome
+        const ordenados = data.sort((a: any, b: any) =>
+          a.nome.localeCompare(b.nome)
+        );
+        setEstados(ordenados);
+      });
+  }, []);
+
+  // Carrega municípios quando um estado for selecionado
+  useEffect(() => {
+    if (estadoSelecionado) {
+      fetch(
+        `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoSelecionado}/municipios`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          const ordenados = data.sort((a: any, b: any) =>
+            a.nome.localeCompare(b.nome)
+          );
+          setMunicipios(ordenados);
+        });
+    }
+  }, [estadoSelecionado]);
 
   function Label({ text, required }: { text: string; required?: boolean }) {
     return (
-      <Text style={styles.label}>
-        {required ? <Text style={styles.required}>* </Text> : null}
+      <Text style={globalCadStyles.label}>
+        {required ? <Text style={globalCadStyles.required}>* </Text> : null}
         {text}
       </Text>
     );
   }
 
   function requiredValid() {
-    return nome && cpf && telefone && cep && endereco && bairro && numero && municipioUf;
+    return (
+      nome &&
+      cpf &&
+      telefone &&
+      cep &&
+      endereco &&
+      bairro &&
+      numero &&
+      estados &&
+      municipios
+    );
   }
 
   function handleNext() {
-    if (!requiredValid()) {
-      Alert.alert("Atenção", "Preencha todos os campos obrigatórios.");
-      return;
-    }
     router.push("/screens/registerclientpreferences");
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Cliente:</Text>
+    <ScrollView
+      style={globalCadStyles.container}
+      contentContainerStyle={globalCadStyles.content}
+    >
+      <Text style={globalStyles.title}>Cliente:</Text>
 
       <Label text="Nome:" required />
-      <TextInput style={styles.input} value={nome} onChangeText={setNome} />
+      <TextInput
+        style={globalCadStyles.input}
+        value={nome}
+        onChangeText={setNome}
+      />
 
       <Label text="CPF:" required />
-      <TextInput style={styles.input} value={cpf} onChangeText={setCpf} keyboardType="number-pad" />
+      <TextInput
+        style={globalCadStyles.input}
+        value={cpf}
+        onChangeText={setCpf}
+        keyboardType="number-pad"
+      />
 
-      <View style={styles.row}>
-        <View style={styles.col}>
+      <View style={globalCadStyles.row}>
+        <View style={globalCadStyles.col}>
           <Label text="Telefone:" required />
-          <TextInput style={styles.input} value={telefone} onChangeText={setTelefone} keyboardType="phone-pad" />
+          <TextInput
+            style={globalCadStyles.input}
+            value={telefone}
+            onChangeText={setTelefone}
+            keyboardType="phone-pad"
+          />
         </View>
-        <View style={styles.gap} />
-        <View style={styles.col}>
+        <View style={globalCadStyles.gap} />
+        <View style={globalCadStyles.col}>
           <Label text="CEP:" required />
-          <TextInput style={styles.input} value={cep} onChangeText={setCep} keyboardType="number-pad" />
+          <TextInput
+            style={globalCadStyles.input}
+            value={cep}
+            onChangeText={setCep}
+            keyboardType="number-pad"
+          />
         </View>
       </View>
 
       <Label text="Endereço:" required />
-      <TextInput style={styles.input} value={endereco} onChangeText={setEndereco} />
+      <TextInput
+        style={globalCadStyles.input}
+        value={endereco}
+        onChangeText={setEndereco}
+      />
 
-      <View style={styles.row}>
-        <View style={styles.col}>
+      <View style={globalCadStyles.row}>
+        <View style={globalCadStyles.col}>
           <Label text="Bairro:" required />
-          <TextInput style={styles.input} value={bairro} onChangeText={setBairro} />
+          <TextInput
+            style={globalCadStyles.input}
+            value={bairro}
+            onChangeText={setBairro}
+          />
         </View>
-        <View style={styles.gap} />
-        <View style={styles.col}>
+        <View style={globalCadStyles.gap} />
+        <View style={globalCadStyles.col}>
           <Label text="Número:" required />
-          <TextInput style={styles.input} value={numero} onChangeText={setNumero} keyboardType="number-pad" />
+          <TextInput
+            style={globalCadStyles.input}
+            value={numero}
+            onChangeText={setNumero}
+            keyboardType="number-pad"
+          />
         </View>
       </View>
 
-      <Label text="Município - UF:" required />
-      <TextInput style={styles.input} value={municipioUf} onChangeText={setMunicipioUf} />
+      <View style={globalCadStyles.row}>
+        <View style={globalCadStyles.col}>
+          <Label text="UF:" required />
+          <View style={globalCadStyles.pickerContainer}>
+            <Picker
+              selectedValue={estadoSelecionado}
+              onValueChange={(v) => setEstadoSelecionado(v)}
+              style={{ backgroundColor: "#F5F5F5", borderWidth: 0 }}
+            >
+              <Picker.Item label="Selecione um estado..." color="#777" />
+              {estados.map((e) => (
+                <Picker.Item key={e.id} label={e.nome} value={e.sigla} />
+              ))}
+            </Picker>
+          </View>
+        </View>
+        <View style={globalCadStyles.gap} />
+        <View style={globalCadStyles.col}>
+          <Label text="Município:" required />
+          <View style={globalCadStyles.pickerContainer}>
+            <Picker
+              selectedValue={municipioSelecionado}
+              onValueChange={(v) => setMunicipioSelecionado(v)}
+              enabled={!!estadoSelecionado}
+              style={{ backgroundColor: "#F5F5F5", borderWidth: 0 }}
+            >
+              <Picker.Item
+                label="Selecione um município..."
+                value=""
+                color="#777"
+              />
+              {municipios.map((m) => (
+                <Picker.Item key={m.id} label={m.nome} value={m.nome} />
+              ))}
+            </Picker>
+          </View>
+        </View>
+      </View>
 
-      <TouchableOpacity style={[styles.button, !requiredValid() && { opacity: 0.5 }]} disabled={!requiredValid()} onPress={handleNext}>
-        <Text style={styles.buttonlabel}>Próximo</Text>
+      <TouchableOpacity
+        style={[globalStyles.button, !requiredValid() && { opacity: 0.5 }]}
+        disabled={!requiredValid()}
+        onPress={handleNext}
+      >
+        <Text style={globalStyles.buttonlabel}>Próximo</Text>
       </TouchableOpacity>
 
-      <Text style={styles.legend}><Text style={styles.required}>*</Text> Campo Obrigatório</Text>
+      <Text style={globalCadStyles.legend}>* Campo Obrigatório</Text>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  title: {
-    fontWeight: "bold",
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  required: {
-    color: "#C65323",
-  },
-  input: {
-    backgroundColor: "#D9D9D9",
-    paddingVertical: 10,
-    paddingLeft: 16,
-    borderRadius: 20,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginTop: 4,
-  },
-  col: {
-    flex: 1,
-  },
-  gap: {
-    width: 12,
-  },
-  button: {
-    alignSelf: "flex-start",
-    backgroundColor: "#C65323",
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  buttonlabel: {
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  legend: {
-    alignSelf: "flex-end",
-    marginTop: 12,
-    fontSize: 11,
-  },
-});
-
-

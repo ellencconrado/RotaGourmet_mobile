@@ -23,11 +23,13 @@ import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
 import { globalStyles } from "../styles/global";
+import { defaultColor } from "@/constants/Colors";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -137,55 +139,75 @@ export default function LoginScreen() {
       />
       <Ionicons name="person-outline" style={styles.icon} />
       <TextInput
-        style={styles.input}
-        placeholder="Email"
+        style={[globalStyles.input, { width: "100%" }]}
+        placeholder="Email ou número de celular"
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Senha"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      <View style={{ width: "100%", position: "relative" }}>
+        <TextInput
+          style={[globalStyles.input, { width: "100%" }]}
+          placeholder="Senha"
+          secureTextEntry={!showPassword}
+          value={password}
+          onChangeText={setPassword}
+        />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={{
+            position: "absolute",
+            top: "50%",
+            right: 20,
+            transform: [{ translateY: -24 }],
+          }}
+        >
+          <Ionicons
+            name={showPassword ? "eye" : "eye-off"}
+            size={24}
+            color={"#888"}
+          />
+        </TouchableOpacity>
+      </View>
       <TouchableOpacity
-        style={styles.button}
+        style={[
+          globalStyles.button,
+          { width: "100%", height: 50, borderRadius: 8, marginTop: 0 },
+        ]}
         disabled={loading}
         onPress={handleLogin}
       >
         {loading ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color="white" />
         ) : (
-          <Text style={styles.buttonlabel}>Entrar</Text>
+          <Text style={globalStyles.buttonlabel}>Entrar</Text>
         )}
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push("/screens/forgotpassword")}>
-        <Text style={styles.link}>Esqueceu a senha?</Text>
+        <Text style={globalStyles.link}>Esqueceu a senha?</Text>
       </TouchableOpacity>
 
       {hasGoogleConfig && (
-        <View style={styles.providersRow}>
+        <View style={globalStyles.providersRow}>
           <TouchableOpacity
-            style={styles.socialButton}
+            style={globalStyles.socialButton}
             disabled={googleLoading || (Platform.OS !== "web" && !request)}
             onPress={
               Platform.OS === "web" ? handleGoogleWeb : handleGoogleNative
             }
           >
             {googleLoading ? (
-              <ActivityIndicator color="#C65323" />
+              <ActivityIndicator color={defaultColor} />
             ) : (
-              <Ionicons name="logo-google" size={26} color="#C65323" />
+              <Ionicons name="logo-google" size={26} color={defaultColor} />
             )}
           </TouchableOpacity>
         </View>
       )}
 
       <TouchableOpacity onPress={() => router.push("/screens/registertype")}>
-        <Text style={styles.link}>Criar conta</Text>
+        <Text style={globalStyles.link}>Criar conta</Text>
       </TouchableOpacity>
     </View>
   );
@@ -195,51 +217,6 @@ const styles = StyleSheet.create({
   icon: {
     marginBottom: 20,
     fontSize: 100,
-    color: "#C65323",
-  },
-  input: {
-    width: "100%",
-    height: 50,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  button: {
-    width: "100%",
-    height: 50,
-    backgroundColor: "#C65323",
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  buttonlabel: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  link: {
-    color: "#C65323",
-    fontSize: 16,
-    marginBottom: 15,
-    textDecorationLine: "underline",
-  },
-  providersRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 15,
-  },
-  socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: "#C65323",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
+    color: defaultColor,
   },
 });

@@ -8,9 +8,8 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
-import { StyleSheet } from "react-native";
-
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { defaultColor } from "@/constants/Colors";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -28,7 +27,7 @@ export default function RootLayout() {
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: "#C65323",
+            backgroundColor: defaultColor,
           },
         }}
       >

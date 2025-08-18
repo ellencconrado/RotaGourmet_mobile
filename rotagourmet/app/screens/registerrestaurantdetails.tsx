@@ -1,18 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
-import { Picker } from "@react-native-picker/picker";
 import { useRouter } from "expo-router";
+import { globalCadStyles } from "../styles/globalcad";
+import { globalStyles } from "../styles/global";
+import { cuisines } from "../../constants/cuisines";
+import MultiSelect from "react-native-multiple-select";
+import { defaultColor } from "@/constants/Colors";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function RegisterRestaurantDetailsScreen() {
   const router = useRouter();
   const [logoUri, setLogoUri] = useState<string | null>(null);
-  const [cuisine, setCuisine] = useState<string>("");
   const [descricao, setDescricao] = useState("");
   const [instagram, setInstagram] = useState("");
   const [facebook, setFacebook] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [selectedFood, setSelectedFood] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -33,62 +45,68 @@ export default function RegisterRestaurantDetailsScreen() {
   }
 
   function requiredValid() {
-    return logoUri && cuisine;
+    return logoUri && selectedFood;
   }
 
   function Label({ text, required }: { text: string; required?: boolean }) {
     return (
-      <Text style={styles.label}>
-        {required ? <Text style={styles.required}>* </Text> : null}
+      <Text style={globalCadStyles.label}>
+        {required ? <Text style={globalCadStyles.required}>* </Text> : null}
         {text}
       </Text>
     );
   }
 
   function handleNext() {
-    if (!requiredValid()) {
-      Alert.alert("Atenção", "Preencha os campos obrigatórios (Logo e Tipo de Culinária)." );
-      return;
-    }
     router.push("/screens/registerrestaurantoperational");
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Restaurante:</Text>
+    <ScrollView
+      style={globalCadStyles.container}
+      contentContainerStyle={globalCadStyles.content}
+    >
+      <Text style={globalStyles.title}>Restaurante:</Text>
 
       <Label text="Logo:" required />
       <TouchableOpacity style={styles.logoPicker} onPress={handlePickLogo}>
         {logoUri ? (
-          <Image source={{ uri: logoUri }} style={styles.logoImage} contentFit="cover" />
+          <Image
+            source={{ uri: logoUri }}
+            style={styles.logoImage}
+            contentFit="cover"
+          />
         ) : (
-          <View style={styles.logoPlaceholder} />
+          <Ionicons name="image" size={100} color={"#888"} />
         )}
       </TouchableOpacity>
 
       <Label text="Tipo de Culinária:" required />
-      <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={cuisine}
-          onValueChange={(v: string) => setCuisine(v)}
-          dropdownIconColor="#888"
-        >
-          <Picker.Item label="Selecione as opções..." value="" color="#777" />
-          <Picker.Item label="Brasileira" value="brasileira" />
-          <Picker.Item label="Italiana" value="italiana" />
-          <Picker.Item label="Japonesa" value="japonesa" />
-          <Picker.Item label="Hamburgueria" value="hamburgueria" />
-          <Picker.Item label="Pizzaria" value="pizzaria" />
-          <Picker.Item label="Árabe" value="arabe" />
-          <Picker.Item label="Churrascaria" value="churrascaria" />
-          <Picker.Item label="Vegana/Vegetariana" value="vegana" />
-          <Picker.Item label="Outros" value="outros" />
-        </Picker>
-      </View>
+      <MultiSelect
+        items={cuisines.map((c) => ({ id: c.toLowerCase(), name: c }))}
+        uniqueKey="id"
+        onSelectedItemsChange={(selected: string[]) =>
+          setSelectedFood(selected)
+        }
+        selectedItems={selectedFood}
+        selectText="Selecione as opções..."
+        searchInputPlaceholderText="Buscar..."
+        tagRemoveIconColor={defaultColor}
+        tagBorderColor={defaultColor}
+        tagTextColor="#000"
+        selectedItemTextColor={defaultColor}
+        selectedItemIconColor={defaultColor}
+        itemTextColor="#000"
+        displayKey="name"
+        searchInputStyle={{ color: "#777" }}
+        submitButtonColor={defaultColor}
+        submitButtonText="Confirmar"
+        styleDropdownMenu={globalCadStyles.pickerContainer}
+      />
 
       <Label text="Descrição:" />
       <TextInput
-        style={[styles.input, styles.multiline]}
+        style={[globalCadStyles.input, styles.multiline]}
         value={descricao}
         onChangeText={setDescricao}
         placeholder="Crie uma apresentação do seu estabelecimento..."
@@ -96,54 +114,43 @@ export default function RegisterRestaurantDetailsScreen() {
         numberOfLines={4}
       />
 
-      <Text style={[styles.label, { marginTop: 16 }]}>Adicione as suas redes sociais:</Text>
-      <TextInput style={styles.input} value={instagram} onChangeText={setInstagram} placeholder="Instagram (usuário ou URL)" />
-      <TextInput style={styles.input} value={facebook} onChangeText={setFacebook} placeholder="Facebook (opcional)" />
-      <TextInput style={styles.input} value={whatsapp} onChangeText={setWhatsapp} placeholder="WhatsApp (ex: 5599999999999)" keyboardType="phone-pad" />
+      <Text style={[globalCadStyles.label, { marginTop: 16 }]}>
+        Adicione as suas redes sociais:
+      </Text>
+      <TextInput
+        style={globalCadStyles.input}
+        value={instagram}
+        onChangeText={setInstagram}
+        placeholder="Instagram (usuário ou URL)"
+      />
+      <TextInput
+        style={globalCadStyles.input}
+        value={facebook}
+        onChangeText={setFacebook}
+        placeholder="Facebook (opcional)"
+      />
+      <TextInput
+        style={globalCadStyles.input}
+        value={whatsapp}
+        onChangeText={setWhatsapp}
+        placeholder="WhatsApp (ex: 5599999999999)"
+        keyboardType="phone-pad"
+      />
 
-      <TouchableOpacity style={[styles.button, !requiredValid() && { opacity: 0.5 }]} disabled={!requiredValid()} onPress={handleNext}>
-        <Text style={styles.buttonlabel}>Próximo</Text>
+      <TouchableOpacity
+        style={[globalStyles.button, !requiredValid() && { opacity: 0.5 }]}
+        disabled={!requiredValid()}
+        onPress={handleNext}
+      >
+        <Text style={globalStyles.buttonlabel}>Próximo</Text>
       </TouchableOpacity>
 
-      <Text style={styles.legend}><Text style={styles.required}>*</Text> Campo Obrigatório</Text>
+      <Text style={globalCadStyles.legend}>* Campo Obrigatório</Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  title: {
-    fontWeight: "bold",
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  required: {
-    color: "#C65323",
-  },
-  input: {
-    backgroundColor: "#D9D9D9",
-    paddingVertical: 10,
-    paddingLeft: 16,
-    borderRadius: 20,
-  },
-  pickerContainer: {
-    backgroundColor: "#D9D9D9",
-    borderRadius: 20,
-    overflow: "hidden",
-  },
   logoPicker: {
     backgroundColor: "#EFEFEF",
     borderRadius: 12,
@@ -167,24 +174,4 @@ const styles = StyleSheet.create({
     minHeight: 84,
     textAlignVertical: "top",
   },
-  button: {
-    alignSelf: "flex-start",
-    backgroundColor: "#C65323",
-    marginTop: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  buttonlabel: {
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  legend: {
-    alignSelf: "flex-end",
-    marginTop: 12,
-    fontSize: 11,
-  },
 });
-
-

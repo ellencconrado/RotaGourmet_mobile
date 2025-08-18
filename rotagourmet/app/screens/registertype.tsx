@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+import { globalStyles } from "../styles/global";
+import { defaultColor } from "@/constants/Colors";
 
 type UserType = "restaurante" | "cliente" | null;
 
@@ -16,7 +18,7 @@ export default function RegisterTypeScreen() {
         <Ionicons
           name={isSelected ? "radio-button-on" : "radio-button-off"}
           size={20}
-          color="#C65323"
+          color={defaultColor}
           style={{ marginRight: 8 }}
         />
         <Text style={styles.optionText}>{label}</Text>
@@ -34,54 +36,37 @@ export default function RegisterTypeScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Selecione uma opção abaixo:</Text>
-      <View style={{ height: 16 }} />
-      {renderOption("restaurante", "Restaurante")}
-      {renderOption("cliente", "Cliente")}
-      <View style={{ height: 24 }} />
+    <View style={[globalStyles.container, { alignItems: "flex-start" }]}>
+      <View style={{ alignSelf: "center" }}>
+        <Text style={[globalStyles.label, { alignSelf: "center" }]}>
+          Selecione uma opção abaixo:
+        </Text>
+        {renderOption("restaurante", "Restaurante")}
+        {renderOption("cliente", "Cliente")}
+      </View>
       <TouchableOpacity
-        style={[styles.button, !selected && { opacity: 0.5 }]}
+        style={[
+          globalStyles.button,
+          !selected && { opacity: 0.5 },
+          { marginTop: 15 },
+        ]}
         disabled={!selected}
         onPress={handleNext}
       >
-        <Text style={styles.buttonlabel}>Próximo</Text>
+        <Text style={globalStyles.buttonlabel}>Próximo</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
-  },
-  title: {
-    fontWeight: "bold",
-    marginTop: 8,
-  },
   option: {
     flexDirection: "row",
-    alignItems: "center",
     paddingVertical: 12,
+    alignItems: "center",
   },
   optionText: {
     fontSize: 16,
     fontWeight: "600",
   },
-  button: {
-    alignSelf: "flex-start",
-    backgroundColor: "#C65323",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  buttonlabel: {
-    textAlign: "center",
-    color: "#fff",
-    fontWeight: "bold",
-  },
 });
-
-

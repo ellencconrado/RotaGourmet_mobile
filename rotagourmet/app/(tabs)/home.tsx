@@ -1,451 +1,534 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Pressable } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Pressable,
+} from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+import { Image } from "expo-image";
+import { globalStyles } from "../styles/global";
 
 export default function HomeScreen() {
-	const [searchText, setSearchText] = useState("");
-	const [isMenuOpen, setIsMenuOpen] = useState(false);
-	const router = useRouter();
+  const [searchText, setSearchText] = useState("");
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
 
-	const navigateTo = (href: string) => {
-		// Tipagem do Expo Router pode não refletir imediatamente novas rotas geradas.
-		// Usamos um wrapper para evitar erros de tipagem durante o desenvolvimento.
-		router.push(href as any);
-	};
+  const navigateTo = (href: string) => {
+    // Tipagem do Expo Router pode não refletir imediatamente novas rotas geradas.
+    // Usamos um wrapper para evitar erros de tipagem durante o desenvolvimento.
+    router.push(href as any);
+  };
 
-    // Dados mockados para demonstração
-	const rotasGastronomicas = [
-		{ id: 1, nome: "Rota das Cervejas", cor: "#FF0000" },
-		{ id: 2, nome: "Rota das Vinícolas", cor: "#FF0000" },
-		{ id: 3, nome: "Criar Rota Gastronômica", isCreate: true }
-	];
+  // Dados mockados para demonstração
+  const rotasGastronomicas = [
+    { id: 1, nome: "Rota das Cervejas", cor: "#FF0000" },
+    { id: 2, nome: "Rota das Vinícolas", cor: "#FF0000" },
+    { id: 3, nome: "Criar Rota Gastronômica", isCreate: true },
+  ];
 
-	// Mapeia o card selecionado para uma categoria de filtro na tela de Localização
-	const rotaToCategoryMap: Record<string, string> = {
-		"Rota das Cervejas": "Churrasco",
-		"Rota das Vinícolas": "Japonesa",
-	};
+  // Mapeia o card selecionado para uma categoria de filtro na tela de Localização
+  const rotaToCategoryMap: Record<string, string> = {
+    "Rota das Cervejas": "Churrasco",
+    "Rota das Vinícolas": "Japonesa",
+  };
 
-    const todosRestaurantes = [
-        { id: 1, nome: "Restaurante Italiano", tipo: "Italiana", avaliacao: 4.5, preco: "$$" },
-        { id: 2, nome: "Churrascaria Premium", tipo: "Churrasco", avaliacao: 4.8, preco: "$$$" },
-        { id: 3, nome: "Sushi Bar", tipo: "Japonesa", avaliacao: 4.3, preco: "$$" },
-        { id: 4, nome: "Pizzaria Artesanal", tipo: "Pizza", avaliacao: 4.6, preco: "$" },
-        { id: 5, nome: "Restaurante Vegano", tipo: "Vegana", avaliacao: 4.2, preco: "$$" },
-    ];
+  const todosRestaurantes = [
+    {
+      id: 1,
+      nome: "Restaurante Italiano",
+      tipo: "Italiana",
+      avaliacao: 4.5,
+      preco: "$$",
+    },
+    {
+      id: 2,
+      nome: "Churrascaria Premium",
+      tipo: "Churrasco",
+      avaliacao: 4.8,
+      preco: "$$$",
+    },
+    { id: 3, nome: "Sushi Bar", tipo: "Japonesa", avaliacao: 4.3, preco: "$$" },
+    {
+      id: 4,
+      nome: "Pizzaria Artesanal",
+      tipo: "Pizza",
+      avaliacao: 4.6,
+      preco: "$",
+    },
+    {
+      id: 5,
+      nome: "Restaurante Vegano",
+      tipo: "Vegana",
+      avaliacao: 4.2,
+      preco: "$$",
+    },
+  ];
 
-    const restaurantesFiltrados = searchText
-        ? todosRestaurantes.filter(rest =>
-            rest.nome.toLowerCase().includes(searchText.toLowerCase()) ||
-            rest.tipo.toLowerCase().includes(searchText.toLowerCase())
-        )
-        : todosRestaurantes;
+  const restaurantesFiltrados = searchText
+    ? todosRestaurantes.filter(
+        (rest) =>
+          rest.nome.toLowerCase().includes(searchText.toLowerCase()) ||
+          rest.tipo.toLowerCase().includes(searchText.toLowerCase())
+      )
+    : todosRestaurantes;
 
-
-
-    return (
-        <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={styles.logoContainer}>
-                    <View style={styles.logoWheel}>
-                        <Ionicons name="compass" size={40} color="#fff" />
-                    </View>
-                    <Text style={styles.logoText}>ROTA GOURMET</Text>
-                    <Text style={styles.tagline}>EXPERIÊNCIAS GASTRONÔMICAS</Text>
-                </View>
-				<TouchableOpacity style={styles.menuButton} onPress={() => setIsMenuOpen((prev) => !prev)}>
-                    <Ionicons name="menu" size={24} color="#fff" />
-                </TouchableOpacity>
-            </View>
-
-			{/* Menu Hambúrguer */}
-			{isMenuOpen && (
-				<>
-					<Pressable style={styles.menuBackdrop} onPress={() => setIsMenuOpen(false)} />
-					<View style={styles.dropdownMenu}>
-						<TouchableOpacity
-							style={styles.menuItem}
-							onPress={() => {
-								setIsMenuOpen(false);
-								navigateTo("/screens/profile");
-							}}
-						>
-							<Ionicons name="person" size={18} color="#fff" style={styles.menuItemIcon} />
-							<Text style={styles.menuItemText}>Perfil</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							style={styles.menuItem}
-							onPress={() => {
-								setIsMenuOpen(false);
-								navigateTo("/screens/notifications");
-							}}
-						>
-							<Ionicons name="notifications" size={18} color="#fff" style={styles.menuItemIcon} />
-							<Text style={styles.menuItemText}>Notificações</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							style={styles.menuItem}
-							onPress={() => {
-								setIsMenuOpen(false);
-								navigateTo("/screens/contact");
-							}}
-						>
-							<Ionicons name="chatbubble-ellipses" size={18} color="#fff" style={styles.menuItemIcon} />
-							<Text style={styles.menuItemText}>Fale Conosco</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							style={[styles.menuItem, styles.menuItemLast]}
-							onPress={() => {
-								setIsMenuOpen(false);
-								navigateTo("/screens/plan");
-							}}
-						>
-							<Ionicons name="link" size={18} color="#fff" style={styles.menuItemIcon} />
-							<Text style={styles.menuItemText}>Plano de Vínculo</Text>
-						</TouchableOpacity>
-					</View>
-				</>
-			)}
-
-            {/* Barra de Pesquisa */}
-            <View style={styles.searchContainer}>
-                <View style={styles.searchBar}>
-                    <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Busque por um restaurante"
-                        value={searchText}
-                        onChangeText={setSearchText}
-                        placeholderTextColor="#666"
-                    />
-                </View>
-            </View>
-
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Rotas Gastronômicas */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Rotas Gastronômicas:</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
-                        {rotasGastronomicas.map((rota) => (
-                            <TouchableOpacity
-                                key={rota.id}
-							style={[
-                                    styles.rotaCard,
-                                    rota.isCreate && styles.createRotaCard
-							]}
-							onPress={() => {
-								const category = rotaToCategoryMap[rota.nome as keyof typeof rotaToCategoryMap];
-								if (rota.isCreate) {
-									navigateTo("/(tabs)/location");
-									return;
-								}
-								if (category) {
-									navigateTo(`/(tabs)/location?category=${encodeURIComponent(category)}`);
-								} else {
-									navigateTo("/(tabs)/location");
-								}
-							}}
-                            >
-                                {rota.isCreate ? (
-                                    <>
-                                        <Ionicons name="add-circle" size={32} color="#C65323" />
-                                        <Text style={styles.createRotaText}>{rota.nome}</Text>
-                                    </>
-                                ) : (
-                                    <Text style={[styles.rotaText, { color: rota.cor }]}>{rota.nome}</Text>
-                                )}
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                    <View style={styles.dotsIndicator}>
-                        <View style={styles.dot} />
-                        <View style={styles.dot} />
-                        <View style={styles.dot} />
-                    </View>
-                </View>
-
-                {/* Restaurantes Gourmet */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Restaurantes Gourmet:</Text>
-                    {restaurantesFiltrados.length > 0 ? (
-                        restaurantesFiltrados.map((restaurante) => (
-                            <TouchableOpacity key={restaurante.id} style={styles.restauranteCard}>
-                                <View style={styles.restauranteInfo}>
-                                    <Text style={styles.restauranteNome}>{restaurante.nome}</Text>
-                                    <Text style={styles.restauranteTipo}>{restaurante.tipo}</Text>
-                                    <View style={styles.restauranteMeta}>
-                                        <View style={styles.avaliacaoContainer}>
-                                            <Ionicons name="star" size={16} color="#FFD700" />
-                                            <Text style={styles.avaliacaoText}>{restaurante.avaliacao}</Text>
-                                        </View>
-                                        <Text style={styles.precoText}>{restaurante.preco}</Text>
-                                    </View>
-                                </View>
-                                <TouchableOpacity style={styles.verMaisButton}>
-                                    <Text style={styles.verMaisText}>Ver mais</Text>
-                                </TouchableOpacity>
-                            </TouchableOpacity>
-                        ))
-                    ) : (
-                        <View style={styles.placeholderContainer}>
-                            <Text style={styles.placeholderText}>
-                                {searchText ? "Nenhum restaurante encontrado" : "Lista de restaurantes aparecerá aqui"}
-                            </Text>
-                        </View>
-                    )}
-                </View>
-
-                {/* Maps Gourmet */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Maps Gourmet:</Text>
-                    <View style={styles.placeholderContainer}>
-                        <Text style={styles.placeholderText}>Mapa gastronômico aparecerá aqui</Text>
-                    </View>
-                </View>
-            </ScrollView>
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Image
+            style={styles.logoWheel}
+            contentFit="cover"
+            source={require("../assets/logo.png")}
+          />
         </View>
-    );
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={() => setIsMenuOpen((prev) => !prev)}
+        >
+          <Ionicons name="menu" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Menu Hambúrguer */}
+      {isMenuOpen && (
+        <>
+          <Pressable
+            style={styles.menuBackdrop}
+            onPress={() => setIsMenuOpen(false)}
+          />
+          <View style={styles.dropdownMenu}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setIsMenuOpen(false);
+                navigateTo("/screens/profile");
+              }}
+            >
+              <Ionicons
+                name="person"
+                size={18}
+                color="#fff"
+                style={styles.menuItemIcon}
+              />
+              <Text style={styles.menuItemText}>Perfil</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setIsMenuOpen(false);
+                navigateTo("/screens/notifications");
+              }}
+            >
+              <Ionicons
+                name="notifications"
+                size={18}
+                color="#fff"
+                style={styles.menuItemIcon}
+              />
+              <Text style={styles.menuItemText}>Notificações</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                setIsMenuOpen(false);
+                navigateTo("/screens/contact");
+              }}
+            >
+              <Ionicons
+                name="chatbubble-ellipses"
+                size={18}
+                color="#fff"
+                style={styles.menuItemIcon}
+              />
+              <Text style={styles.menuItemText}>Fale Conosco</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemLast]}
+              onPress={() => {
+                setIsMenuOpen(false);
+                navigateTo("/screens/plan");
+              }}
+            >
+              <Ionicons
+                name="link"
+                size={18}
+                color="#fff"
+                style={styles.menuItemIcon}
+              />
+              <Text style={styles.menuItemText}>Plano de Vínculo</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
+      {/* Barra de Pesquisa */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons
+            name="search"
+            size={20}
+            color="#666"
+            style={styles.searchIcon}
+          />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Busque por um restaurante"
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholderTextColor="#666"
+          />
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Rotas Gastronômicas */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Rotas Gastronômicas:</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.horizontalScroll}
+          >
+            {rotasGastronomicas.map((rota) => (
+              <TouchableOpacity
+                key={rota.id}
+                style={[
+                  styles.rotaCard,
+                  rota.isCreate && styles.createRotaCard,
+                ]}
+                onPress={() => {
+                  const category =
+                    rotaToCategoryMap[
+                      rota.nome as keyof typeof rotaToCategoryMap
+                    ];
+                  if (rota.isCreate) {
+                    navigateTo("/(tabs)/location");
+                    return;
+                  }
+                  if (category) {
+                    navigateTo(
+                      `/(tabs)/location?category=${encodeURIComponent(
+                        category
+                      )}`
+                    );
+                  } else {
+                    navigateTo("/(tabs)/location");
+                  }
+                }}
+              >
+                {rota.isCreate ? (
+                  <>
+                    <Ionicons name="add-circle" size={32} color="#C65323" />
+                    <Text style={styles.createRotaText}>{rota.nome}</Text>
+                  </>
+                ) : (
+                  <Text style={[styles.rotaText, { color: rota.cor }]}>
+                    {rota.nome}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <View style={styles.dotsIndicator}>
+            <View style={styles.dot} />
+            <View style={styles.dot} />
+            <View style={styles.dot} />
+          </View>
+        </View>
+
+        {/* Restaurantes Gourmet */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Restaurantes Gourmet:</Text>
+          {restaurantesFiltrados.length > 0 ? (
+            restaurantesFiltrados.map((restaurante) => (
+              <TouchableOpacity
+                key={restaurante.id}
+                style={styles.restauranteCard}
+              >
+                <View style={styles.restauranteInfo}>
+                  <Text style={styles.restauranteNome}>{restaurante.nome}</Text>
+                  <Text style={styles.restauranteTipo}>{restaurante.tipo}</Text>
+                  <View style={styles.restauranteMeta}>
+                    <View style={styles.avaliacaoContainer}>
+                      <Ionicons name="star" size={16} color="#FFD700" />
+                      <Text style={styles.avaliacaoText}>
+                        {restaurante.avaliacao}
+                      </Text>
+                    </View>
+                    <Text style={styles.precoText}>{restaurante.preco}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.verMaisButton}>
+                  <Text style={styles.verMaisText}>Ver mais</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <Text style={styles.placeholderText}>
+                {searchText
+                  ? "Nenhum restaurante encontrado"
+                  : "Lista de restaurantes aparecerá aqui"}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Maps Gourmet */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Maps Gourmet:</Text>
+          <View style={styles.placeholderContainer}>
+            <Text style={styles.placeholderText}>
+              Mapa gastronômico aparecerá aqui
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  header: {
+    backgroundColor: "#C65323",
+    paddingTop: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  logoContainer: {
+    alignItems: "center",
+    flex: 1,
+  },
+  logoWheel: {
+    width: 180,
+    height: 80,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoText: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  tagline: {
+    color: "#fff",
+    fontSize: 12,
+    opacity: 0.9,
+  },
+  menuButton: {
+    padding: 8,
+  },
+  menuBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "transparent",
+    zIndex: 9,
+  },
+  dropdownMenu: {
+    position: "absolute",
+    top: 90,
+    right: 16,
+    backgroundColor: "#C65323",
+    borderRadius: 12,
+    paddingVertical: 8,
+    minWidth: 190,
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  menuItemLast: {
+    paddingBottom: 12,
+  },
+  menuItemIcon: {
+    marginRight: 10,
+  },
+  menuItemText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: "#fff",
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#D9D9D9",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  searchIcon: {
+    marginRight: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+  },
+  horizontalScroll: {
+    marginBottom: 12,
+  },
+  rotaCard: {
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    marginRight: 16,
+    minWidth: 140,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
     },
-    header: {
-        backgroundColor: "#C65323",
-        paddingTop: 50,
-        paddingBottom: 20,
-        paddingHorizontal: 16,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  createRotaCard: {
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#C65323",
+    borderStyle: "dashed",
+  },
+  rotaText: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  createRotaText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#C65323",
+    textAlign: "center",
+    marginTop: 8,
+  },
+  dotsIndicator: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#C65323",
+  },
+  placeholderContainer: {
+    backgroundColor: "#D9D9D9",
+    height: 120,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placeholderText: {
+    color: "#666",
+    fontSize: 14,
+    textAlign: "center",
+  },
+  restauranteCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
     },
-    logoContainer: {
-        alignItems: "center",
-        flex: 1,
-    },
-    logoWheel: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: "rgba(255,255,255,0.2)",
-        alignItems: "center",
-        justifyContent: "center",
-        marginBottom: 8,
-    },
-    logoText: {
-        color: "#fff",
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 4,
-    },
-    tagline: {
-        color: "#fff",
-        fontSize: 12,
-        opacity: 0.9,
-    },
-    menuButton: {
-        padding: 8,
-    },
-		menuBackdrop: {
-			position: "absolute",
-			top: 0,
-			left: 0,
-			right: 0,
-			bottom: 0,
-			backgroundColor: "transparent",
-			zIndex: 9,
-		},
-		dropdownMenu: {
-			position: "absolute",
-			top: 90,
-			right: 16,
-			backgroundColor: "#C65323",
-			borderRadius: 12,
-			paddingVertical: 8,
-			minWidth: 190,
-			zIndex: 10,
-			shadowColor: "#000",
-			shadowOffset: { width: 0, height: 4 },
-			shadowOpacity: 0.2,
-			shadowRadius: 6,
-			elevation: 8,
-		},
-		menuItem: {
-			flexDirection: "row",
-			alignItems: "center",
-			paddingVertical: 10,
-			paddingHorizontal: 14,
-		},
-		menuItemLast: {
-			paddingBottom: 12,
-		},
-		menuItemIcon: {
-			marginRight: 10,
-		},
-		menuItemText: {
-			color: "#fff",
-			fontSize: 14,
-			fontWeight: "600",
-		},
-    searchContainer: {
-        paddingHorizontal: 16,
-        paddingVertical: 16,
-        backgroundColor: "#fff",
-    },
-    searchBar: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: "#D9D9D9",
-        borderRadius: 25,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-    },
-    searchIcon: {
-        marginRight: 12,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 16,
-        color: "#333",
-    },
-    content: {
-        flex: 1,
-        paddingHorizontal: 16,
-    },
-    section: {
-        marginBottom: 24,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        marginBottom: 12,
-        color: "#333",
-    },
-    horizontalScroll: {
-        marginBottom: 12,
-    },
-    rotaCard: {
-        backgroundColor: "#fff",
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderRadius: 12,
-        marginRight: 16,
-        minWidth: 140,
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    createRotaCard: {
-        backgroundColor: "#fff",
-        borderWidth: 2,
-        borderColor: "#C65323",
-        borderStyle: "dashed",
-    },
-    rotaText: {
-        fontSize: 14,
-        fontWeight: "600",
-        textAlign: "center",
-    },
-    createRotaText: {
-        fontSize: 12,
-        fontWeight: "600",
-        color: "#C65323",
-        textAlign: "center",
-        marginTop: 8,
-    },
-    dotsIndicator: {
-        flexDirection: "row",
-        justifyContent: "center",
-        gap: 8,
-    },
-    dot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: "#C65323",
-    },
-    placeholderContainer: {
-        backgroundColor: "#D9D9D9",
-        height: 120,
-        borderRadius: 12,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    placeholderText: {
-        color: "#666",
-        fontSize: 14,
-        textAlign: "center",
-    },
-    restauranteCard: {
-        backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 12,
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    restauranteInfo: {
-        flex: 1,
-    },
-    restauranteNome: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: "#333",
-        marginBottom: 4,
-    },
-    restauranteTipo: {
-        fontSize: 14,
-        color: "#666",
-        marginBottom: 8,
-    },
-    restauranteMeta: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 16,
-    },
-    avaliacaoContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 4,
-    },
-    avaliacaoText: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#333",
-    },
-    precoText: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#C65323",
-    },
-    verMaisButton: {
-        backgroundColor: "#C65323",
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-    },
-    verMaisText: {
-        color: "#fff",
-        fontSize: 12,
-        fontWeight: "600",
-    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  restauranteInfo: {
+    flex: 1,
+  },
+  restauranteNome: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  restauranteTipo: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 8,
+  },
+  restauranteMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
+  avaliacaoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  avaliacaoText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
+  },
+  precoText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#C65323",
+  },
+  verMaisButton: {
+    backgroundColor: "#C65323",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  verMaisText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
 });

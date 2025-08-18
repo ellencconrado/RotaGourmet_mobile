@@ -57,10 +57,11 @@ export default function ForgotPassword() {
 
   return (
     <SafeAreaView style={globalStyles.container}>
-      <View style={styles.content}>
-        <Text style={styles.label}>Email / Telefone:</Text>
+      <View>
+        {/*style={styles.content}*/}
+        <Text style={globalStyles.label}>Email / Telefone:</Text>
         <TextInput
-          style={styles.input}
+          style={globalStyles.input}
           placeholder="Digite seu email ou telefone"
           value={email}
           onChangeText={setEmail}
@@ -95,8 +96,8 @@ export default function ForgotPassword() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>Enviar</Text>
+        <TouchableOpacity style={globalStyles.button} onPress={handleSend}>
+          <Text style={globalStyles.buttonlabel}>Enviar</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -104,36 +105,6 @@ export default function ForgotPassword() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    marginRight: 15,
-  },
-  headerTitle: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-    paddingTop: 30,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#333",
-  },
-  input: {
-    backgroundColor: "#F5F5F5",
-    width: "100%",
-    height: 50,
-    paddingHorizontal: 15,
-    borderRadius: 10,
-    fontSize: 16,
-    marginBottom: 25,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-  },
   instruction: {
     fontSize: 14,
     color: "#666",
@@ -156,19 +127,5 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     borderWidth: 1,
     borderColor: "#E0E0E0",
-  },
-  sendButton: {
-    backgroundColor: "#C65323",
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 25,
-    alignSelf: "center",
-    minWidth: 120,
-  },
-  sendButtonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
   },
 });
