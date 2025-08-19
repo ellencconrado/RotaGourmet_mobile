@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,98 +7,107 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useState, useRef } from "react";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "lib/firebase"; // ajuste o path do seu init do Firebase
 import { globalStyles } from "../styles/global";
 
 export default function ForgotPassword() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState(["", "", "", "", ""]);
-  const codeRefs = useRef<TextInput[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleCodeChange = (text: string, index: number) => {
-    const newCode = [...code];
-    newCode[index] = text;
-    setCode(newCode);
-
-    // Auto-focus next input
-    if (text && index < 4) {
-      codeRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleSend = () => {
-    if (!email.trim()) {
-      Alert.alert("Atenção", "Por favor, informe seu email ou telefone.");
+  const handleSend = async () => {
+    const value = email.trim().toLowerCase();
+    if (!value) {
+      Alert.alert("Atenção", "Por favor, informe seu email.");
       return;
     }
 
-    // Verifica se o código foi preenchido
-    const isCodeComplete = code.every((digit) => digit.trim() !== "");
-    if (!isCodeComplete) {
+    // Validação simples de email
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (!isEmail) {
+      Alert.alert("Atenção", "Digite um email válido.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Opção 1: usar o fluxo padrão do Firebase (sem actionCodeSettings)
+      await sendPasswordResetEmail(auth, value);
+
+      // Dica: se quiser customizar a URL de retorno, use actionCodeSettings (ver notas abaixo)
+      // await sendPasswordResetEmail(auth, value, {
+      //   url: "https://SEU_DOMINIO_AUTORIZADO/reset-finalizado",
+      //   handleCodeInApp: false
+      // });
+
       Alert.alert(
-        "Atenção",
-        "Por favor, preencha o código de confirmação completo."
+        "Verifique seu email",
+        "Enviamos um link de redefinição de senha. Siga as instruções no email para criar uma nova senha.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(), // ou router.push("/login")
+          },
+        ]
       );
-      return;
+    } catch (error: any) {
+      // Mapeamento de erros comuns do Firebase Auth
+      let message = "Não foi possível enviar o email de redefinição.";
+      switch (error?.code) {
+        case "auth/invalid-email":
+          message = "O email informado é inválido.";
+          break;
+        case "auth/user-not-found":
+          message = "Não encontramos uma conta com esse email.";
+          break;
+        case "auth/too-many-requests":
+          message =
+            "Muitas tentativas. Tente novamente mais tarde ou verifique seu email.";
+          break;
+        case "auth/network-request-failed":
+          message =
+            "Falha de rede. Verifique sua conexão com a internet e tente novamente.";
+          break;
+      }
+      Alert.alert("Atenção", message);
+    } finally {
+      setLoading(false);
     }
-
-    // Aqui você implementaria a verificação do código
-    // Por enquanto, vamos simular que o código foi aceito
-    Alert.alert("Sucesso", "Código verificado! Agora defina sua nova senha.", [
-      {
-        text: "OK",
-        onPress: () => router.push("/screens/newpassword"),
-      },
-    ]);
   };
 
   return (
     <SafeAreaView style={globalStyles.container}>
       <View>
-        {/*style={styles.content}*/}
-        <Text style={globalStyles.label}>Email / Telefone:</Text>
+        <Text style={globalStyles.label}>Email:</Text>
         <TextInput
           style={globalStyles.input}
-          placeholder="Digite seu email ou telefone"
+          placeholder="Digite seu email"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          autoCorrect={false}
         />
 
         <Text style={styles.instruction}>
-          Enviaremos um código de confirmação para seu email
+          Enviaremos um link de redefinição para o seu email.
         </Text>
 
-        {/* Code Input Fields */}
-        <View style={styles.codeContainer}>
-          {code.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => {
-                if (ref) codeRefs.current[index] = ref;
-              }}
-              style={styles.codeInput}
-              value={digit}
-              onChangeText={(text) => handleCodeChange(text, index)}
-              maxLength={1}
-              keyboardType="number-pad"
-              textAlign="center"
-              onKeyPress={({ nativeEvent }) => {
-                if (nativeEvent.key === "Backspace" && !digit && index > 0) {
-                  codeRefs.current[index - 1]?.focus();
-                }
-              }}
-            />
-          ))}
-        </View>
-
-        <TouchableOpacity style={globalStyles.button} onPress={handleSend}>
-          <Text style={globalStyles.buttonlabel}>Enviar</Text>
+        <TouchableOpacity
+          style={[globalStyles.button, loading && { opacity: 0.7 }]}
+          onPress={handleSend}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={globalStyles.buttonlabel}>Enviar</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -111,21 +121,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 30,
     lineHeight: 20,
-  },
-  codeContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 40,
-    gap: 10,
-  },
-  codeInput: {
-    width: 50,
-    height: 50,
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    fontSize: 20,
-    fontWeight: "bold",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
   },
 });
