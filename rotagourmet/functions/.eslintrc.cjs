@@ -12,8 +12,8 @@ module.exports = {
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project: ["./tsconfig.json"],      // 👈 relativo à pasta functions
-    tsconfigRootDir: __dirname,        // 👈 base correta
+    project: ["./tsconfig.json"],      
+    tsconfigRootDir: __dirname,        
     sourceType: "module",
   },
   ignorePatterns: [

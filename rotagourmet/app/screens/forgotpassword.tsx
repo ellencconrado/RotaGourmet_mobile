@@ -31,12 +31,10 @@ export default function ForgotPassword() {
       Alert.alert("Atenção", "Digite um email válido.");
       return;
     }
-
     try {
       setLoading(true);
       // Envia o email de redefinição de senha
       await sendPasswordResetEmail(auth, value);
-
 
       Alert.alert(
         "Verifique seu email",
