@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "lib/firebase"; // ajuste o path do seu init do Firebase
+import { auth } from "lib/firebase"; 
 import { globalStyles } from "../styles/global";
 
 export default function ForgotPassword() {
@@ -25,8 +25,7 @@ export default function ForgotPassword() {
       Alert.alert("Atenção", "Por favor, informe seu email.");
       return;
     }
-
-    // Validação simples de email
+    // Valida o formato do email
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     if (!isEmail) {
       Alert.alert("Atenção", "Digite um email válido.");
@@ -35,15 +34,9 @@ export default function ForgotPassword() {
 
     try {
       setLoading(true);
-
-      // Opção 1: usar o fluxo padrão do Firebase (sem actionCodeSettings)
+      // Envia o email de redefinição de senha
       await sendPasswordResetEmail(auth, value);
 
-      // Dica: se quiser customizar a URL de retorno, use actionCodeSettings (ver notas abaixo)
-      // await sendPasswordResetEmail(auth, value, {
-      //   url: "https://SEU_DOMINIO_AUTORIZADO/reset-finalizado",
-      //   handleCodeInApp: false
-      // });
 
       Alert.alert(
         "Verifique seu email",
@@ -51,12 +44,12 @@ export default function ForgotPassword() {
         [
           {
             text: "OK",
-            onPress: () => router.back(), // ou router.push("/login")
+            onPress: () => router.back(), // Volta para a tela anterior
           },
         ]
       );
     } catch (error: any) {
-      // Mapeamento de erros comuns do Firebase Auth
+      // Trata os erros de envio do email
       let message = "Não foi possível enviar o email de redefinição.";
       switch (error?.code) {
         case "auth/invalid-email":
