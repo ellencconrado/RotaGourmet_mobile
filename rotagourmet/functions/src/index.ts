@@ -51,6 +51,7 @@ async function requireAuth(req: any): Promise<any> {
     throw e;
   }
 }
+
 /**
  * Mantém apenas dígitos.
  * @param {string} s Texto de entrada.
@@ -70,15 +71,8 @@ function isTime(s: string): boolean {
 }
 
 /**
- * Cria restaurante (POST).
- * Body esperado (pt-BR): {
- *  nome, cnpj, telefone, cep, endereco, bairro, numero, uf, municipio,
- *  reserva, fila, filas, diasFuncionamento, horarioAbertura,
- *  horarioFechamento, precoMinimo, precoMaximo, cardapio
- * }
- * @param {any} req Requisição.
- * @param {any} res Resposta.
- * @return {Promise<void>} Sem retorno (HTTP).
+ * ----------------- RESTAURANTES -----------------
+ * (mesmo código que você já tinha; mantive para contexto)
  */
 export const createRestaurant = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
@@ -189,14 +183,6 @@ export const createRestaurant = onRequest(
   }),
 );
 
-/**
- * Lista restaurantes com filtros e paginação.
- * Query: uf, municipio, reserva, fila, q, limit,
- * cursorId (padrão) ou cursorNome (busca).
- * @param {any} req Requisição.
- * @param {any} res Resposta.
- * @return {Promise<void>} Sem retorno (HTTP).
- */
 export const listRestaurants = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
     try {
@@ -291,12 +277,6 @@ export const listRestaurants = onRequest(
   }),
 );
 
-/**
- * Obtém restaurante por id (?id=...).
- * @param {any} req Requisição.
- * @param {any} res Resposta.
- * @return {Promise<void>} Sem retorno (HTTP).
- */
 export const getRestaurant = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
     try {
@@ -318,12 +298,6 @@ export const getRestaurant = onRequest(
   }),
 );
 
-/**
- * Atualiza restaurante (PATCH ?id=...).
- * @param {any} req Requisição.
- * @param {any} res Resposta.
- * @return {Promise<void>} Sem retorno (HTTP).
- */
 export const updateRestaurant = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
     try {
@@ -423,12 +397,6 @@ export const updateRestaurant = onRequest(
   }),
 );
 
-/**
- * Remove restaurante (DELETE ?id=...).
- * @param {any} req Requisição.
- * @param {any} res Resposta.
- * @return {Promise<void>} Sem retorno (HTTP).
- */
 export const deleteRestaurant = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
     try {
@@ -449,6 +417,262 @@ export const deleteRestaurant = onRequest(
       const code = err?.code === 401 ? 401 : 500;
       const msg = err?.message || "erro interno";
       res.status(code).send({error: msg});
+    }
+  }),
+);
+
+/**
+ * --------- CLIENTES ----------
+ * Estrutura:
+ *  - Publico:   users/{uid}
+ *  - Privado:   users_private/{uid}   (guarda cpf)
+ *
+ * Body padrão (POST/PATCH):
+ * {
+ *   nome, telefone, cpf, cep, endereco, bairro, numero, uf, municipio,
+ *   prefs: string[], alergias?: string|null
+ * }
+ */
+/**
+ * Verifica se o valor é uma string não vazia (ignorando espaços).
+ * @param {*} v Valor a verificar.
+ * @returns {boolean} `true` se for string com ao menos um caractere.
+ */
+/* eslint-disable-next-line require-jsdoc */
+function isNonEmptyString(v: any) {
+  return typeof v === "string" && v.trim() !== "";
+}
+
+// POST /createClient (perfil do usuário autenticado)
+export const createClient = onRequest(
+  withCors(async (req: any, res: any): Promise<void> => {
+    try {
+      if (req.method !== "POST") {
+        res.status(405).send({error: "Use POST"});
+        return;
+      }
+      const authPayload = await requireAuth(req);
+      const b = req.body ?? {};
+
+      // Normalização
+      const nome = String(b.nome ?? "").trim();
+      const telefone = onlyDigits(b.telefone ?? "");
+      const cpf = onlyDigits(b.cpf ?? "");
+      const cep = onlyDigits(b.cep ?? "");
+      const endereco = String(b.endereco ?? "");
+      const bairro = String(b.bairro ?? "");
+      const numero = String(b.numero ?? "");
+      const uf = String(b.uf ?? "");
+      const municipio = String(b.municipio ?? "");
+      const prefs: string[] = Array.isArray(b.prefs) ? b.prefs : [];
+      const alergias = isNonEmptyString(b.alergias) ?
+        String(b.alergias).trim() :
+        null;
+
+      if (!isNonEmptyString(nome)) {
+        res.status(400).send({error: "nome é obrigatório"});
+        return;
+      }
+      if (cpf.length !== 11) {
+        res.status(400).send({error: "CPF inválido"});
+        return;
+      }
+      if (cep.length !== 8) {
+        res.status(400).send({error: "CEP inválido"});
+        return;
+      }
+      if (!isNonEmptyString(uf) || !isNonEmptyString(municipio)) {
+        res.status(400).send({error: "UF e município são obrigatórios"});
+        return;
+      }
+
+      // Impede CPF duplicado
+      const dup = await db.collection("users_private")
+        .where("cpf", "==", cpf).limit(1).get();
+      if (!dup.empty && dup.docs[0].id !== authPayload.uid) {
+        res.status(409).send({error: "CPF já cadastrado em outra conta"});
+        return;
+      }
+
+      const now = FieldValue.serverTimestamp();
+      const uid = authPayload.uid;
+
+      await db.runTransaction(async (tx) => {
+        tx.set(
+          db.collection("users").doc(uid),
+          {
+            type: "cliente",
+            nome,
+            nomeLower: nome.toLowerCase(),
+            tel: telefone,
+            endereco: {
+              cep,
+              logradouro: endereco,
+              bairro,
+              numero,
+              municipio,
+              uf,
+            },
+            prefs,
+            alergias,
+            createdAt: now,
+            updatedAt: now,
+          },
+          {merge: true},
+        );
+        tx.set(
+          db.collection("users_private").doc(uid),
+          {cpf, createdAt: now, updatedAt: now},
+          {merge: true},
+        );
+      });
+
+      res.status(201).send({id: uid});
+    } catch (err: any) {
+      const code = err?.code === 401 ? 401 : 500;
+      const msg = err?.message || "erro interno";
+      res.status(code).send({error: msg});
+    }
+  }),
+);
+
+// GET /getClient?id=me (ou uid – aqui restringimos ao próprio)
+export const getClient = onRequest(
+  withCors(async (req: any, res: any): Promise<void> => {
+    try {
+      const authPayload = await requireAuth(req);
+      const idParam = String(req.query.id ?? "me");
+      const id = idParam === "me" ? authPayload.uid : idParam;
+
+      if (id !== authPayload.uid) {
+        res.status(403).send({error: "acesso negado"});
+        return;
+      }
+
+      const doc = await db.collection("users").doc(id).get();
+      if (!doc.exists) {
+        res.status(404).send({error: "não encontrado"});
+        return;
+      }
+      res.status(200).send({id: doc.id, ...doc.data()});
+    } catch (err: any) {
+      res.status(500).send({error: err?.message || "erro interno"});
+    }
+  }),
+);
+
+// PATCH /updateClient?id=me (atualiza campos permitidos)
+export const updateClient = onRequest(
+  withCors(async (req: any, res: any): Promise<void> => {
+    try {
+      if (req.method !== "PATCH") {
+        res.status(405).send({error: "Use PATCH"});
+        return;
+      }
+      const authPayload = await requireAuth(req);
+      const idParam = String(req.query.id ?? "me");
+      const id = idParam === "me" ? authPayload.uid : idParam;
+
+      if (id !== authPayload.uid) {
+        res.status(403).send({error: "acesso negado"});
+        return;
+      }
+
+      const data = req.body ?? {};
+      const updates: any = {updatedAt: FieldValue.serverTimestamp()};
+
+      if ("nome" in data) {
+        const nome = String(data.nome ?? "").trim();
+        if (!nome) {
+          res.status(400).send({error: "nome inválido"});
+          return;
+        }
+        updates.nome = nome;
+        updates.nomeLower = nome.toLowerCase();
+      }
+      if ("telefone" in data) {
+        updates.tel = onlyDigits(data.telefone ?? "");
+      }
+
+      if ("endereco" in data && data.endereco) {
+        const e = data.endereco;
+        const cep = e.cep !== undefined ? onlyDigits(e.cep) : undefined;
+        if (cep !== undefined && cep.length !== 8) {
+          res.status(400).send({error: "CEP inválido"});
+          return;
+        }
+        updates.endereco = {
+          ...(e.cep !== undefined ? {cep} : {}),
+          ...(e.logradouro !== undefined ?
+            {logradouro: String(e.logradouro)} : {}),
+          ...(e.numero !== undefined ? {numero: String(e.numero)} : {}),
+          ...(e.bairro !== undefined ? {bairro: String(e.bairro)} : {}),
+          ...(e.municipio !== undefined ?
+            {municipio: String(e.municipio)} : {}),
+          ...(e.uf !== undefined ? {uf: String(e.uf)} : {}),
+        };
+      }
+
+      if ("prefs" in data && Array.isArray(data.prefs)) {
+        updates.prefs = data.prefs;
+      }
+      if ("alergias" in data) {
+        updates.alergias = isNonEmptyString(data.alergias) ?
+          String(data.alergias).trim() :
+          null;
+      }
+
+      // CPF via users_private
+      if ("cpf" in data) {
+        const cpf = onlyDigits(data.cpf ?? "");
+        if (cpf.length !== 11) {
+          res.status(400).send({error: "CPF inválido"});
+          return;
+        }
+        const dup = await db.collection("users_private")
+          .where("cpf", "==", cpf).limit(1).get();
+        if (!dup.empty && dup.docs[0].id !== id) {
+          res.status(409).send({error: "CPF já cadastrado"});
+          return;
+        }
+        await db.collection("users_private").doc(id).set({
+          cpf,
+          updatedAt: FieldValue.serverTimestamp(),
+        }, {merge: true});
+      }
+
+      await db.collection("users").doc(id).set(updates, {merge: true});
+      res.status(204).send("");
+    } catch (err: any) {
+      const code = err?.code === 401 ? 401 : 500;
+      res.status(code).send({error: err?.message || "erro interno"});
+    }
+  }),
+);
+
+// DELETE /deleteClient?id=me (remove público/privado do próprio usuário)
+export const deleteClient = onRequest(
+  withCors(async (req: any, res: any): Promise<void> => {
+    try {
+      if (req.method !== "DELETE") {
+        res.status(405).send({error: "Use DELETE"});
+        return;
+      }
+      const authPayload = await requireAuth(req);
+      const idParam = String(req.query.id ?? "me");
+      const id = idParam === "me" ? authPayload.uid : idParam;
+
+      if (id !== authPayload.uid) {
+        res.status(403).send({error: "acesso negado"});
+        return;
+      }
+
+      await db.collection("users").doc(id).delete();
+      await db.collection("users_private").doc(id).delete();
+      res.status(204).send("");
+    } catch (err: any) {
+      const code = err?.code === 401 ? 401 : 500;
+      res.status(code).send({error: err?.message || "erro interno"});
     }
   }),
 );
