@@ -535,7 +535,6 @@ export const createClient = onRequest(
     }
   }),
 );
-
 // GET /getClient?id=me (ou uid – aqui restringimos ao próprio)
 export const getClient = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
