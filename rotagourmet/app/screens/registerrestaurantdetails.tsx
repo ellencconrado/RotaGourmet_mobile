@@ -10,8 +10,8 @@ import {
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { globalCadStyles } from "../styles/globalcad";
-import { globalStyles } from "../styles/global";
+import { globalCadStyles } from "../../styles/globalcad";
+import { globalStyles } from "../../styles/global";
 import { cuisines } from "../../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
 import { defaultColor } from "@/constants/Colors";

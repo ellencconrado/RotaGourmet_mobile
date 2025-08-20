@@ -51,7 +51,6 @@ async function requireAuth(req: any): Promise<any> {
     throw e;
   }
 }
-
 /**
  * Mantém apenas dígitos.
  * @param {string} s Texto de entrada.

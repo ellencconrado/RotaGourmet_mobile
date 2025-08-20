@@ -11,8 +11,8 @@ import {
 import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import Slider from "@react-native-community/slider";
-import { globalCadStyles } from "../styles/globalcad";
-import { globalStyles } from "../styles/global";
+import { globalCadStyles } from "../../styles/globalcad";
+import { globalStyles } from "../../styles/global";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { defaultColor } from "@/constants/Colors";
 

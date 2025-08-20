@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
-import { globalStyles } from "../styles/global";
+import { globalStyles } from "../../styles/global";
 
 export default function SplashScreen() {
   const router = useRouter();

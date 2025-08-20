@@ -10,6 +10,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { defaultColor } from "@/constants/Colors";
+import { RegistrationProvider } from "@/hooks/useRegistration";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -24,6 +25,7 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <RegistrationProvider>
       <Stack
         screenOptions={{
           headerStyle: {
@@ -84,6 +86,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="+not-found" />
       </Stack>
+      </RegistrationProvider>
       <StatusBar style="auto" />
     </ThemeProvider>
   );

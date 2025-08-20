@@ -10,8 +10,8 @@ import {
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
-import { globalCadStyles } from "../styles/globalcad";
-import { globalStyles } from "../styles/global";
+import { globalCadStyles } from "../../styles/globalcad";
+import { globalStyles } from "../../styles/global";
 
 export default function NewPasswordScreen() {
   const router = useRouter();

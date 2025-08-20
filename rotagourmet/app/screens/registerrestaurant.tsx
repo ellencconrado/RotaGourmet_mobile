@@ -7,9 +7,9 @@ import {
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles } from "../styles/global";
+import { globalStyles } from "../../styles/global";
 import { Picker } from "@react-native-picker/picker";
-import { globalCadStyles } from "../styles/globalcad";
+import { globalCadStyles } from "../../styles/globalcad";
 
 export default function RegisterRestaurantScreen() {
   const router = useRouter();

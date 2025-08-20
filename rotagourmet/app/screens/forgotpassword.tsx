@@ -12,7 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "lib/firebase"; 
-import { globalStyles } from "../styles/global";
+import { globalStyles } from "../../styles/global";
 
 export default function ForgotPassword() {
   const router = useRouter();

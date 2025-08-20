@@ -22,7 +22,7 @@ import { auth } from "@/lib/firebase";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
-import { globalStyles } from "../styles/global";
+import { globalStyles } from "../../styles/global";
 import { defaultColor } from "@/constants/Colors";
 
 export default function LoginScreen() {

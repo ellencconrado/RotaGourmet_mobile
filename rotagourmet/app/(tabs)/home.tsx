@@ -11,7 +11,7 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
-import { globalStyles } from "../styles/global";
+import { globalStyles } from "../../styles/global";
 
 export default function HomeScreen() {
   const [searchText, setSearchText] = useState("");

@@ -1,3 +1,4 @@
+// app/screens/registerclientpreferences.tsx
 import React, { useState } from "react";
 import {
   ScrollView,
@@ -6,19 +7,30 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles } from "../styles/global";
-import { globalCadStyles } from "../styles/globalcad";
+import { globalStyles } from "styles/global";
+import { globalCadStyles } from "styles/globalcad";
 import { cuisines } from "../../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
 import { defaultColor } from "@/constants/Colors";
+import { useRegistration } from "@/hooks/useRegistration";
 
 export default function RegisterClientPreferencesScreen() {
   const router = useRouter();
+  const { setClientPrefs } = useRegistration(); // <-- salva no contexto
   const [alergias, setAlergias] = useState("");
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
 
   function Label({ text }: { text: string }) {
     return <Text style={globalCadStyles.label}>{text}</Text>;
+  }
+
+  function handleNext() {
+    // guarda no contexto para a tela final usar ao salvar no Firestore
+    setClientPrefs({
+      preferencias: selectedPreferences,
+      alergiasObs: alergias.trim(),
+    });
+    router.push("/screens/registerfinal?type=client");
   }
 
   return (
@@ -48,8 +60,9 @@ export default function RegisterClientPreferencesScreen() {
         searchInputStyle={{ color: "#777" }}
         submitButtonColor={defaultColor}
         submitButtonText="Confirmar"
-        styleDropdownMenu={globalCadStyles.pickerContainer} // opcional: aplica seu estilo
+        styleDropdownMenu={globalCadStyles.pickerContainer}
       />
+
       <Label text="Observação Alérgicas:" />
       <TextInput
         style={globalCadStyles.input}
@@ -57,10 +70,7 @@ export default function RegisterClientPreferencesScreen() {
         onChangeText={setAlergias}
       />
 
-      <TouchableOpacity
-        style={globalStyles.button}
-        onPress={() => router.push("/screens/registerfinal?type=client")}
-      >
+      <TouchableOpacity style={globalStyles.button} onPress={handleNext}>
         <Text style={globalStyles.buttonlabel}>Próximo</Text>
       </TouchableOpacity>
     </ScrollView>
