@@ -1,7 +1,7 @@
 // lib/firebase.ts
-import { initializeApp, getApps } from "firebase/app";
-import { initializeAuth, getAuth } from "firebase/auth";
-import * as FirebaseAuth from "firebase/auth";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import * as FirebaseAuth from "firebase/auth"; // <— namespace import
+											  
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -16,18 +16,31 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID!,
 };
 
-const app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// IMPORTANTE: mobile usa AsyncStorage para persistir sessão; no web usa getAuth
-const getReactNativePersistence: any = (FirebaseAuth as any).getReactNativePersistence;
+// Pega funções via namespace para contornar typings
+const getAuth = FirebaseAuth.getAuth;
+const initializeAuth =
+  (FirebaseAuth as any).initializeAuth || FirebaseAuth.getAuth;
+const getReactNativePersistence =
+  (FirebaseAuth as any).getReactNativePersistence;
 
-export const auth =
-  Platform.OS === "web"
-    ? getAuth(app)
-    : initializeAuth(app, {
-        persistence: getReactNativePersistence(AsyncStorage),
-      });
+let authInstance: any;
+if (Platform.OS === "web" || !getReactNativePersistence) {
+  // Se o helper não existir na sua versão, usa sessão in-memory
+  authInstance = getAuth(app);
+} else {
+  try {
+    authInstance = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch {
+    // já inicializado (hot-reload)
+    authInstance = getAuth(app);
+  }
+}
 
+export const auth = authInstance;
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 

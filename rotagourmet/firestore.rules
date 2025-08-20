@@ -1,9 +1,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Perfil público do usuário (o que você salva em "users/{uid}")
+    match /users/{uid} {
+      // cria/atualiza/ler/excluir apenas o próprio documento
+      allow create: if isOwner(uid);
+      allow read, update, delete: if isOwner(uid);
+    }
+
+    // Dados privados do usuário (CPF etc.) em "users_private/{uid}"
+    match /users_private/{uid} {
+      // só o dono pode ler/escrever
+      allow create, read, update, delete: if isOwner(uid);
+    }
+
+    // (Opcional) restaurantes – leitura pública; dono pode criar/editar
+    match /restaurants/{id} {
+      allow read: if true;
+      allow create: if signedIn();                  // qualquer user logado pode criar
+      allow update, delete: if signedIn()
+        && resource.data.donoUid == request.auth.uid
+        && request.resource.data.donoUid == resource.data.donoUid; // não deixa trocar o dono
+    }
+
+    // bloqueia o resto
     match /{document=**} {
-      // DEV: liberado
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }
