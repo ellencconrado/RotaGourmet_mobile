@@ -442,7 +442,6 @@ export const deleteRestaurant = onRequest(
 function isNonEmptyString(v: any) {
   return typeof v === "string" && v.trim() !== "";
 }
-
 // POST /createClient (perfil do usuário autenticado)
 export const createClient = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
