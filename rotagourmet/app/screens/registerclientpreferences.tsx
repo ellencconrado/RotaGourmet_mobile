@@ -6,11 +6,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles } from "../styles/global";
+import { globalStyles, defaultColor } from "../styles/global";
 import { globalCadStyles } from "../styles/globalcad";
 import { cuisines } from "../../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
-import { defaultColor } from "@/constants/Colors";
 
 export default function RegisterClientPreferencesScreen() {
   const router = useRouter();

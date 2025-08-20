@@ -5,18 +5,24 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
-  Alert,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState, useRef } from "react";
-import { globalStyles } from "../styles/global";
+import { borderColor, globalStyles, inputColor } from "../styles/global";
 
 export default function ForgotPassword() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState(["", "", "", "", ""]);
   const codeRefs = useRef<TextInput[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  function showModal(message: string) {
+    setModalMessage(message);
+    setModalVisible(true);
+  }
 
   const handleCodeChange = (text: string, index: number) => {
     const newCode = [...code];
@@ -31,34 +37,26 @@ export default function ForgotPassword() {
 
   const handleSend = () => {
     if (!email.trim()) {
-      Alert.alert("Atenção", "Por favor, informe seu email ou telefone.");
+      showModal("Por favor, informe seu email ou telefone.");
       return;
     }
 
     // Verifica se o código foi preenchido
     const isCodeComplete = code.every((digit) => digit.trim() !== "");
     if (!isCodeComplete) {
-      Alert.alert(
-        "Atenção",
-        "Por favor, preencha o código de confirmação completo."
-      );
+      showModal("Por favor, preencha o código de confirmação completo.");
       return;
     }
 
     // Aqui você implementaria a verificação do código
     // Por enquanto, vamos simular que o código foi aceito
-    Alert.alert("Sucesso", "Código verificado! Agora defina sua nova senha.", [
-      {
-        text: "OK",
-        onPress: () => router.push("/screens/newpassword"),
-      },
-    ]);
+    showModal("Código verificado! Agora defina sua nova senha.");
+    router.push("/screens/newpassword");
   };
 
   return (
     <SafeAreaView style={globalStyles.container}>
       <View>
-        {/*style={styles.content}*/}
         <Text style={globalStyles.label}>Email / Telefone:</Text>
         <TextInput
           style={globalStyles.input}
@@ -100,6 +98,26 @@ export default function ForgotPassword() {
           <Text style={globalStyles.buttonlabel}>Enviar</Text>
         </TouchableOpacity>
       </View>
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={globalStyles.modalBackground}>
+          <View style={globalStyles.modalContainer}>
+            <Text style={globalStyles.modalText}>{modalMessage}</Text>
+            <TouchableOpacity
+              style={globalStyles.modalButton}
+              onPress={() => {
+                setModalVisible(false);
+              }}
+            >
+              <Text style={{ color: "white" }}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -121,11 +139,11 @@ const styles = StyleSheet.create({
   codeInput: {
     width: 50,
     height: 50,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: inputColor,
     borderRadius: 10,
     fontSize: 20,
     fontWeight: "bold",
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: borderColor,
   },
 });

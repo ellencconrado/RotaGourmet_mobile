@@ -9,7 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { defaultColor } from "@/constants/Colors";
+import { defaultColor } from "@/app/styles/global";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

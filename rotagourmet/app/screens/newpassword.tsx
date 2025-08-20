@@ -51,8 +51,8 @@ export default function NewPasswordScreen() {
       return;
     }
 
-    // Aqui você implementaria a lógica para salvar a nova senha
     showModal("Senha alterada com sucesso!");
+    router.push("/screens/newpassword");
   };
 
   return (
@@ -128,17 +128,13 @@ export default function NewPasswordScreen() {
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={globalCadStyles.modalBackground}>
-          <View style={globalCadStyles.modalContainer}>
-            <Text style={globalCadStyles.modalText}>{modalMessage}</Text>
+        <View style={globalStyles.modalBackground}>
+          <View style={globalStyles.modalContainer}>
+            <Text style={globalStyles.modalText}>{modalMessage}</Text>
             <TouchableOpacity
-              style={globalCadStyles.modalButton}
+              style={globalStyles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-                // Redireciona para home se mensagem for de sucesso
-                if (modalMessage.includes("finalizado com sucesso")) {
-                  router.push("/(tabs)/home");
-                }
               }}
             >
               <Text style={{ color: "white" }}>OK</Text>

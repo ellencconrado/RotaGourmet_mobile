@@ -5,7 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
+  Modal,
   Platform,
 } from "react-native";
 import { Image } from "expo-image";
@@ -22,14 +22,21 @@ import { auth } from "@/lib/firebase";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
-import { globalStyles } from "../styles/global";
-import { defaultColor } from "@/constants/Colors";
+import { globalStyles, defaultColor } from "../styles/global";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  function showModal(message: string) {
+    setModalMessage(message);
+    setModalVisible(true);
+  }
+
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
@@ -56,7 +63,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!email || !password) {
-      Alert.alert("Atenção", "Informe email e senha.");
+      showModal("Informe email e senha.");
       return;
     }
     try {
@@ -66,7 +73,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       const message =
         error?.message || "Falha ao entrar. Verifique suas credenciais.";
-      Alert.alert("Erro ao entrar", message);
+      showModal("Erro ao entrar" + message);
     } finally {
       setLoading(false);
     }
@@ -74,8 +81,7 @@ export default function LoginScreen() {
 
   async function handleGoogleWeb() {
     if (!process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
-      Alert.alert(
-        "Erro",
+      showModal(
         "Google Auth não está configurado para web. Configure EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID."
       );
       return;
@@ -88,7 +94,7 @@ export default function LoginScreen() {
       router.replace("/home");
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
-      Alert.alert("Erro", message);
+      showModal("Erro" + message);
     } finally {
       setGoogleLoading(false);
     }
@@ -96,10 +102,7 @@ export default function LoginScreen() {
 
   async function handleGoogleNative() {
     if (!request) {
-      Alert.alert(
-        "Erro",
-        "Google Auth não está configurado para dispositivos móveis."
-      );
+      showModal("Google Auth não está configurado para dispositivos móveis.");
       return;
     }
 
@@ -117,7 +120,7 @@ export default function LoginScreen() {
       router.replace("/home");
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
-      Alert.alert("Erro", message);
+      showModal("Erro" + message);
     } finally {
       setGoogleLoading(false);
     }
@@ -209,6 +212,27 @@ export default function LoginScreen() {
       <TouchableOpacity onPress={() => router.push("/screens/registertype")}>
         <Text style={globalStyles.link}>Criar conta</Text>
       </TouchableOpacity>
+
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={globalStyles.modalBackground}>
+          <View style={globalStyles.modalContainer}>
+            <Text style={globalStyles.modalText}>{modalMessage}</Text>
+            <TouchableOpacity
+              style={globalStyles.modalButton}
+              onPress={() => {
+                setModalVisible(false);
+              }}
+            >
+              <Text style={{ color: "white" }}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

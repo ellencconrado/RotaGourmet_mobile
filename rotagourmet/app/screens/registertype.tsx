@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import { globalStyles } from "../styles/global";
-import { defaultColor } from "@/constants/Colors";
+import { globalStyles, defaultColor } from "../styles/global";
 
 type UserType = "restaurante" | "cliente" | null;
 

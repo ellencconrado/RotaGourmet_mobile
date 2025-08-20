@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  View,
   Text,
   StyleSheet,
   TextInput,
@@ -11,10 +10,9 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { globalCadStyles } from "../styles/globalcad";
-import { globalStyles } from "../styles/global";
+import { globalStyles,borderColor, defaultColor } from "../styles/global";
 import { cuisines } from "../../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
-import { defaultColor } from "@/constants/Colors";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 export default function RegisterRestaurantDetailsScreen() {
@@ -152,7 +150,7 @@ export default function RegisterRestaurantDetailsScreen() {
 
 const styles = StyleSheet.create({
   logoPicker: {
-    backgroundColor: "#EFEFEF",
+    backgroundColor: borderColor,
     borderRadius: 12,
     height: 120,
     alignItems: "center",

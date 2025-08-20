@@ -68,6 +68,7 @@ export default function RegisterFinalScreen() {
         userType === "client" ? "cliente" : "restaurante"
       } finalizado com sucesso!`
     );
+    router.push("/(tabs)/home");
   }
 
   function Label({ text, required }: { text: string; required?: boolean }) {
@@ -178,17 +179,13 @@ export default function RegisterFinalScreen() {
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={globalCadStyles.modalBackground}>
-          <View style={globalCadStyles.modalContainer}>
-            <Text style={globalCadStyles.modalText}>{modalMessage}</Text>
+        <View style={globalStyles.modalBackground}>
+          <View style={globalStyles.modalContainer}>
+            <Text style={globalStyles.modalText}>{modalMessage}</Text>
             <TouchableOpacity
-              style={globalCadStyles.modalButton}
+              style={globalStyles.modalButton}
               onPress={() => {
                 setModalVisible(false);
-                // Redireciona para home se mensagem for de sucesso
-                if (modalMessage.includes("finalizado com sucesso")) {
-                  router.push("/(tabs)/home");
-                }
               }}
             >
               <Text style={{ color: "white" }}>OK</Text>

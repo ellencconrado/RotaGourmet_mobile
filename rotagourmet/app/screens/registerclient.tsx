@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles } from "../styles/global";
+import { globalStyles, inputColor } from "../styles/global";
 import { globalCadStyles } from "../styles/globalcad";
 import { Picker } from "@react-native-picker/picker";
 
@@ -161,7 +161,7 @@ export default function RegisterClientScreen() {
             <Picker
               selectedValue={estadoSelecionado}
               onValueChange={(v) => setEstadoSelecionado(v)}
-              style={{ backgroundColor: "#F5F5F5", borderWidth: 0 }}
+              style={{ backgroundColor: inputColor, borderWidth: 0 }}
             >
               <Picker.Item label="Selecione um estado..." color="#777" />
               {estados.map((e) => (
@@ -178,7 +178,7 @@ export default function RegisterClientScreen() {
               selectedValue={municipioSelecionado}
               onValueChange={(v) => setMunicipioSelecionado(v)}
               enabled={!!estadoSelecionado}
-              style={{ backgroundColor: "#F5F5F5", borderWidth: 0 }}
+              style={{ backgroundColor: inputColor, borderWidth: 0 }}
             >
               <Picker.Item
                 label="Selecione um município..."
