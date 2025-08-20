@@ -6,16 +6,18 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Modal,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState, useRef } from "react";
 import { borderColor, globalStyles, inputColor } from "../styles/global";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { auth } from "lib/firebase";
 
 export default function ForgotPassword() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState(["", "", "", "", ""]);
-  const codeRefs = useRef<TextInput[]>([]);
+  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState("");
 
@@ -24,34 +26,51 @@ export default function ForgotPassword() {
     setModalVisible(true);
   }
 
-  const handleCodeChange = (text: string, index: number) => {
-    const newCode = [...code];
-    newCode[index] = text;
-    setCode(newCode);
-
-    // Auto-focus next input
-    if (text && index < 4) {
-      codeRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleSend = () => {
-    if (!email.trim()) {
-      showModal("Por favor, informe seu email ou telefone.");
+  const handleSend = async () => {
+    const value = email.trim().toLowerCase();
+    if (!value) {
+      showModal("Atenção. Por favor, informe seu email.");
       return;
     }
 
-    // Verifica se o código foi preenchido
-    const isCodeComplete = code.every((digit) => digit.trim() !== "");
-    if (!isCodeComplete) {
-      showModal("Por favor, preencha o código de confirmação completo.");
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (!isEmail) {
+      showModal("Atenção. Digite um email válido.");
       return;
     }
-
-    // Aqui você implementaria a verificação do código
-    // Por enquanto, vamos simular que o código foi aceito
-    showModal("Código verificado! Agora defina sua nova senha.");
     router.push("/screens/newpassword");
+    try {
+      setLoading(true);
+      // Envia o email de redefinição de senha
+      await sendPasswordResetEmail(auth, value);
+
+      showModal(
+        "Verifique seu email. Enviamos um link de redefinição de senha. Siga as instruções no email para criar uma nova senha."
+      );
+      router.back();
+    } catch (error: any) {
+      // Trata os erros de envio do email
+      let message = "Não foi possível enviar o email de redefinição.";
+      switch (error?.code) {
+        case "auth/invalid-email":
+          message = "O email informado é inválido.";
+          break;
+        case "auth/user-not-found":
+          message = "Não encontramos uma conta com esse email.";
+          break;
+        case "auth/too-many-requests":
+          message =
+            "Muitas tentativas. Tente novamente mais tarde ou verifique seu email.";
+          break;
+        case "auth/network-request-failed":
+          message =
+            "Falha de rede. Verifique sua conexão com a internet e tente novamente.";
+          break;
+      }
+      showModal("Atenção" + message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,42 +79,28 @@ export default function ForgotPassword() {
         <Text style={globalStyles.label}>Email / Telefone:</Text>
         <TextInput
           style={globalStyles.input}
-          placeholder="Digite seu email ou telefone"
+          placeholder="Digite seu email"
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          autoCorrect={false}
         />
 
         <Text style={styles.instruction}>
-          Enviaremos um código de confirmação para seu email
+          Enviaremos um link de redefinição para o seu email.
         </Text>
 
-        {/* Code Input Fields */}
-        <View style={styles.codeContainer}>
-          {code.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => {
-                if (ref) codeRefs.current[index] = ref;
-              }}
-              style={styles.codeInput}
-              value={digit}
-              onChangeText={(text) => handleCodeChange(text, index)}
-              maxLength={1}
-              keyboardType="number-pad"
-              textAlign="center"
-              onKeyPress={({ nativeEvent }) => {
-                if (nativeEvent.key === "Backspace" && !digit && index > 0) {
-                  codeRefs.current[index - 1]?.focus();
-                }
-              }}
-            />
-          ))}
-        </View>
-
-        <TouchableOpacity style={globalStyles.button} onPress={handleSend}>
-          <Text style={globalStyles.buttonlabel}>Enviar</Text>
+        <TouchableOpacity
+          style={[globalStyles.button, loading && { opacity: 0.7 }]}
+          onPress={handleSend}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={globalStyles.buttonlabel}>Enviar</Text>
+          )}
         </TouchableOpacity>
       </View>
       <Modal
