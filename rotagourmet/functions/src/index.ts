@@ -561,6 +561,7 @@ export const getClient = onRequest(
   }),
 );
 
+
 // PATCH /updateClient?id=me (atualiza campos permitidos)
 export const updateClient = onRequest(
   withCors(async (req: any, res: any): Promise<void> => {
