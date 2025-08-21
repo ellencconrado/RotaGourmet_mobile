@@ -26,4 +26,4 @@ export const Colors = {
   },
 };
 
-//export  {defaultColor};
+export  {defaultColor};
