@@ -1,5 +1,7 @@
 import { StyleSheet } from "react-native";
-import { defaultColor } from "@/constants/Colors";
+import { borderColor, defaultColor, inputColor } from "@/app/styles/global";
+
+
 
 export const globalCadStyles = StyleSheet.create({
   container: {
@@ -17,12 +19,12 @@ export const globalCadStyles = StyleSheet.create({
     marginBottom: 4,
   },
   input: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: inputColor,
     paddingVertical: 10,
     paddingLeft: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: borderColor,
   },
   row: {
     flexDirection: "row",
@@ -36,12 +38,12 @@ export const globalCadStyles = StyleSheet.create({
     width: 12,
   },
   pickerContainer: {
-    backgroundColor: "#F5F5F5",
+    backgroundColor: inputColor,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: "#E0E0E0",
+    borderColor: borderColor,
     overflow: "hidden",
   },
   required: {
@@ -53,28 +55,5 @@ export const globalCadStyles = StyleSheet.create({
     fontSize: 11,
     color: defaultColor,
   },
-    modalBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    width: "80%",
-    alignItems: "center",
-  },
-  modalText: {
-    marginBottom: 16,
-    fontSize: 16,
-    textAlign: "center",
-  },
-  modalButton: {
-    backgroundColor: "#C65323",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
+  
 });

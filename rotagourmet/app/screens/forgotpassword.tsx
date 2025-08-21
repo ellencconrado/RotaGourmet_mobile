@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,46 +5,49 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
-  Alert,
+  Modal,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useState, useRef } from "react";
+import { borderColor, globalStyles, inputColor } from "../styles/global";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "lib/firebase"; 
-import { globalStyles } from "../styles/global";
+import { auth } from "lib/firebase";
 
 export default function ForgotPassword() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+
+  function showModal(message: string) {
+    setModalMessage(message);
+    setModalVisible(true);
+  }
 
   const handleSend = async () => {
     const value = email.trim().toLowerCase();
     if (!value) {
-      Alert.alert("Atenção", "Por favor, informe seu email.");
+      showModal("Atenção. Por favor, informe seu email.");
       return;
     }
-    // Valida o formato do email
+
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     if (!isEmail) {
-      Alert.alert("Atenção", "Digite um email válido.");
+      showModal("Atenção. Digite um email válido.");
       return;
     }
+    router.push("/screens/newpassword");
     try {
       setLoading(true);
       // Envia o email de redefinição de senha
       await sendPasswordResetEmail(auth, value);
 
-      Alert.alert(
-        "Verifique seu email",
-        "Enviamos um link de redefinição de senha. Siga as instruções no email para criar uma nova senha.",
-        [
-          {
-            text: "OK",
-            onPress: () => router.back(), // Volta para a tela anterior
-          },
-        ]
+      showModal(
+        "Verifique seu email. Enviamos um link de redefinição de senha. Siga as instruções no email para criar uma nova senha."
       );
+      router.back();
     } catch (error: any) {
       // Trata os erros de envio do email
       let message = "Não foi possível enviar o email de redefinição.";
@@ -65,7 +67,7 @@ export default function ForgotPassword() {
             "Falha de rede. Verifique sua conexão com a internet e tente novamente.";
           break;
       }
-      Alert.alert("Atenção", message);
+      showModal("Atenção" + message);
     } finally {
       setLoading(false);
     }
@@ -74,7 +76,7 @@ export default function ForgotPassword() {
   return (
     <SafeAreaView style={globalStyles.container}>
       <View>
-        <Text style={globalStyles.label}>Email:</Text>
+        <Text style={globalStyles.label}>Email / Telefone:</Text>
         <TextInput
           style={globalStyles.input}
           placeholder="Digite seu email"
@@ -101,6 +103,26 @@ export default function ForgotPassword() {
           )}
         </TouchableOpacity>
       </View>
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={globalStyles.modalBackground}>
+          <View style={globalStyles.modalContainer}>
+            <Text style={globalStyles.modalText}>{modalMessage}</Text>
+            <TouchableOpacity
+              style={globalStyles.modalButton}
+              onPress={() => {
+                setModalVisible(false);
+              }}
+            >
+              <Text style={{ color: "white" }}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -112,5 +134,21 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 30,
     lineHeight: 20,
+  },
+  codeContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 40,
+    gap: 10,
+  },
+  codeInput: {
+    width: 50,
+    height: 50,
+    backgroundColor: inputColor,
+    borderRadius: 10,
+    fontSize: 20,
+    fontWeight: "bold",
+    borderWidth: 1,
+    borderColor: borderColor,
   },
 });

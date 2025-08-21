@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles } from "../styles/global";
+import { globalStyles} from "../styles/global";
 import { globalCadStyles } from "../styles/globalcad";
 import { cuisines } from "../../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
