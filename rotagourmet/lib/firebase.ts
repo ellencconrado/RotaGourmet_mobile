@@ -1,10 +1,13 @@
 // lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
-import * as FirebaseAuth from "firebase/auth"; // <— namespace import
-											  
+import * as FirebaseAuth from "firebase/auth"; // namespace p/ compat de typings
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import {
+  getFirestore,
+  initializeFirestore,
+  connectFirestoreEmulator,
+} from "firebase/firestore";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 import { Platform } from "react-native";
 
 const firebaseConfig = {
@@ -18,7 +21,7 @@ const firebaseConfig = {
 
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// Pega funções via namespace para contornar typings
+// ------- Auth (com persistência no RN) -------
 const getAuth = FirebaseAuth.getAuth;
 const initializeAuth =
   (FirebaseAuth as any).initializeAuth || FirebaseAuth.getAuth;
@@ -27,7 +30,7 @@ const getReactNativePersistence =
 
 let authInstance: any;
 if (Platform.OS === "web" || !getReactNativePersistence) {
-  // Se o helper não existir na sua versão, usa sessão in-memory
+  // Web ou versões antigas sem helper de persistência
   authInstance = getAuth(app);
 } else {
   try {
@@ -35,13 +38,53 @@ if (Platform.OS === "web" || !getReactNativePersistence) {
       persistence: getReactNativePersistence(AsyncStorage),
     });
   } catch {
-    // já inicializado (hot-reload)
+    // hot-reload: já inicializado
     authInstance = getAuth(app);
   }
 }
-
 export const auth = authInstance;
-export const db = getFirestore(app);
+
+// ------- Firestore (com long polling auto) -------
+let _db;
+try {
+  // Em RN/Expo alguns ambientes precisam de long polling
+  _db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+  });
+} catch {
+  // se initializeFirestore já foi chamado ou não existir, cai no getFirestore
+  _db = getFirestore(app);
+}
+export const db = _db;
+
+// ------- Storage -------
 export const storage = getStorage(app);
 
+// ------- Emulators em DEV -------
+const USE_EMULATORS = __DEV__; // se preferir controlar via env: process.env.EXPO_PUBLIC_USE_EMULATORS === "1"
+const host = Platform.OS === "android" ? "10.0.2.2" : "localhost";
 
+if (USE_EMULATORS) {
+  // Auth
+  try {
+    FirebaseAuth.connectAuthEmulator(auth, `http://${host}:9099`, {
+      disableWarnings: true,
+    });
+  } catch {
+    // já conectado (hot-reload)
+  }
+
+  // Firestore
+  try {
+    connectFirestoreEmulator(db as any, host, 8080);
+  } catch {
+    // já conectado (hot-reload)
+  }
+
+  // Storage
+  try {
+    connectStorageEmulator(storage, host, 9199);
+  } catch {
+    // já conectado (hot-reload)
+  }
+}

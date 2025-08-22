@@ -1,22 +1,19 @@
 import React, { useEffect, useState } from "react";
-import {
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import { Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { globalCadStyles } from "../styles/globalcad";
-import { globalStyles,borderColor, defaultColor } from "../styles/global";
+import { globalStyles, borderColor, defaultColor } from "../styles/global";
 import { cuisines } from "../../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRegistration } from "hooks/useRegistration";
 
 export default function RegisterRestaurantDetailsScreen() {
   const router = useRouter();
+  const { setRestaurantDetails } = useRegistration();
+
   const [logoUri, setLogoUri] = useState<string | null>(null);
   const [descricao, setDescricao] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -25,9 +22,7 @@ export default function RegisterRestaurantDetailsScreen() {
   const [selectedFood, setSelectedFood] = useState<string[]>([]);
 
   useEffect(() => {
-    (async () => {
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    })();
+    (async () => { await ImagePicker.requestMediaLibraryPermissionsAsync(); })();
   }, []);
 
   async function handlePickLogo() {
@@ -37,14 +32,12 @@ export default function RegisterRestaurantDetailsScreen() {
       allowsEditing: true,
       aspect: [4, 3],
     });
-    if (!result.canceled) {
-      setLogoUri(result.assets[0]?.uri ?? null);
-    }
+    if (!result.canceled) setLogoUri(result.assets[0]?.uri ?? null);
   }
 
-  function requiredValid() {
-    return logoUri && selectedFood;
-  }
+function requiredValid() {
+  return Boolean(logoUri && selectedFood.length > 0);
+}
 
   function Label({ text, required }: { text: string; required?: boolean }) {
     return (
@@ -56,24 +49,25 @@ export default function RegisterRestaurantDetailsScreen() {
   }
 
   function handleNext() {
+    setRestaurantDetails({
+      logoUri,
+      descricao: descricao.trim(),
+      instagram: instagram.trim(),
+      facebook: facebook.trim(),
+      whatsapp: whatsapp.trim(),
+      cuisines: selectedFood,
+    });
     router.push("/screens/registerrestaurantoperational");
   }
 
   return (
-    <ScrollView
-      style={globalCadStyles.container}
-      contentContainerStyle={globalCadStyles.content}
-    >
+    <ScrollView style={globalCadStyles.container} contentContainerStyle={globalCadStyles.content}>
       <Text style={globalStyles.title}>Restaurante:</Text>
 
       <Label text="Logo:" required />
       <TouchableOpacity style={styles.logoPicker} onPress={handlePickLogo}>
         {logoUri ? (
-          <Image
-            source={{ uri: logoUri }}
-            style={styles.logoImage}
-            contentFit="cover"
-          />
+          <Image source={{ uri: logoUri }} style={styles.logoImage} contentFit="cover" />
         ) : (
           <Ionicons name="image" size={100} color={"#888"} />
         )}
@@ -83,9 +77,7 @@ export default function RegisterRestaurantDetailsScreen() {
       <MultiSelect
         items={cuisines.map((c) => ({ id: c.toLowerCase(), name: c }))}
         uniqueKey="id"
-        onSelectedItemsChange={(selected: string[]) =>
-          setSelectedFood(selected)
-        }
+        onSelectedItemsChange={(selected: string[]) => setSelectedFood(selected)}
         selectedItems={selectedFood}
         selectText="Selecione as opções..."
         searchInputPlaceholderText="Buscar..."
@@ -112,9 +104,7 @@ export default function RegisterRestaurantDetailsScreen() {
         numberOfLines={4}
       />
 
-      <Text style={[globalCadStyles.label, { marginTop: 16 }]}>
-        Adicione as suas redes sociais:
-      </Text>
+      <Text style={[globalCadStyles.label, { marginTop: 16 }]}>Adicione as suas redes sociais:</Text>
       <TextInput
         style={globalCadStyles.input}
         value={instagram}
@@ -162,14 +152,5 @@ const styles = StyleSheet.create({
     height: "100%",
     borderRadius: 12,
   },
-  logoPlaceholder: {
-    width: 64,
-    height: 48,
-    backgroundColor: "#DDD",
-    borderRadius: 8,
-  },
-  multiline: {
-    minHeight: 84,
-    textAlignVertical: "top",
-  },
+  multiline: { minHeight: 84, textAlignVertical: "top" },
 });
