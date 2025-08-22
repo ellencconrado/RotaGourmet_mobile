@@ -227,8 +227,6 @@ export default function RegisterClientScreen() {
           <View style={globalCadStyles.pickerContainer}>
             <Picker
               selectedValue={estadoSelecionado}
-              onValueChange={(v) => setEstadoSelecionado(String(v))}
-              style={{ backgroundColor: "#F5F5F5", borderWidth: 0 }}
               onValueChange={(v) => setEstadoSelecionado(v)}
               style={{ backgroundColor: inputColor, borderWidth: 0 }}
             >
