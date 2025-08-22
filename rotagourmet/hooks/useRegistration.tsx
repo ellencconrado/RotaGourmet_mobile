@@ -8,24 +8,57 @@ import React, {
 
 type UserType = "client" | "restaurant" | null;
 
+export type Address = {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  bairro: string;
+  municipio: string;
+  uf: string;
+};
+
 export type ClientBasics = {
   nome: string;
   cpf: string;
   telefone: string;
-  endereco: {
-    cep: string;
-    logradouro: string;
-    numero: string;
-    bairro: string;
-    municipio: string;
-    uf: string;
-  };
+  endereco: Address;
 };
 
 export type ClientPrefs = {
-  preferencias: string[];   // ids/nomes das cozinhas escolhidas
-  alergiasObs: string;      // texto livre
+  preferencias: string[];
+  alergiasObs: string;
 };
+
+// ---------- Restaurante (NOVO) ----------
+export type RestaurantBasics = {
+  nome: string;
+  cnpj: string;
+  telefone: string;
+  endereco: Address;
+};
+
+export type RestaurantDetails = {
+  logoUri: string | null;
+  descricao: string;
+  instagram: string;
+  facebook: string;
+  whatsapp: string;
+  cuisines: string[]; // ids
+};
+
+export type RestaurantOperational = {
+  reserva: boolean;
+  fila: boolean;
+  filas: { nome: string; ativo: boolean }[];
+  diasFuncionamento: Record<string, boolean>; // dom..sab
+  horarioAbertura: string; // "08:00"
+  horarioFechamento: string; // "22:00"
+  cardapioUri: string | null;
+  cardapioNome: string;
+  precoMinimo: number;
+  precoMaximo: number;
+};
+// ----------------------------------------
 
 type RegistrationContextValue = {
   userType: UserType;
@@ -37,21 +70,33 @@ type RegistrationContextValue = {
   clientPrefs: ClientPrefs;
   setClientPrefs: (patch: Partial<ClientPrefs>) => void;
 
+  // Restaurante (NOVO)
+  restaurantBasics: RestaurantBasics;
+  setRestaurantBasics: (patch: Partial<RestaurantBasics>) => void;
+
+  restaurantDetails: RestaurantDetails;
+  setRestaurantDetails: (patch: Partial<RestaurantDetails>) => void;
+
+  restaurantOperational: RestaurantOperational;
+  setRestaurantOperational: (patch: Partial<RestaurantOperational>) => void;
+
   reset: () => void;
+};
+
+const initialAddress: Address = {
+  cep: "",
+  logradouro: "",
+  numero: "",
+  bairro: "",
+  municipio: "",
+  uf: "",
 };
 
 const initialBasics: ClientBasics = {
   nome: "",
   cpf: "",
   telefone: "",
-  endereco: {
-    cep: "",
-    logradouro: "",
-    numero: "",
-    bairro: "",
-    municipio: "",
-    uf: "",
-  },
+  endereco: initialAddress,
 };
 
 const initialPrefs: ClientPrefs = {
@@ -59,26 +104,56 @@ const initialPrefs: ClientPrefs = {
   alergiasObs: "",
 };
 
-const RegistrationContext = createContext<RegistrationContextValue | undefined>(
-  undefined,
-);
+// Restaurante (iniciais)
+const initialRestaurantBasics: RestaurantBasics = {
+  nome: "",
+  cnpj: "",
+  telefone: "",
+  endereco: initialAddress,
+};
+
+const initialRestaurantDetails: RestaurantDetails = {
+  logoUri: null,
+  descricao: "",
+  instagram: "",
+  facebook: "",
+  whatsapp: "",
+  cuisines: [],
+};
+
+const initialRestaurantOperational: RestaurantOperational = {
+  reserva: false,
+  fila: false,
+  filas: [],
+  diasFuncionamento: { dom: false, seg: false, ter: false, qua: false, qui: false, sex: false, sab: false },
+  horarioAbertura: "08:00",
+  horarioFechamento: "22:00",
+  cardapioUri: null,
+  cardapioNome: "",
+  precoMinimo: 0,
+  precoMaximo: 0,
+};
+
+const RegistrationContext = createContext<RegistrationContextValue | undefined>(undefined);
 
 export function RegistrationProvider({ children }: { children: ReactNode }) {
   const [userType, setUserType] = useState<UserType>(null);
-  const [clientBasics, setClientBasicsState] =
-    useState<ClientBasics>(initialBasics);
-  const [clientPrefs, setClientPrefsState] =
-    useState<ClientPrefs>(initialPrefs);
 
-  // Faz merge seguro (inclusive do objeto endereco)
+  const [clientBasics, setClientBasicsState] = useState<ClientBasics>(initialBasics);
+  const [clientPrefs, setClientPrefsState] = useState<ClientPrefs>(initialPrefs);
+
+  const [restaurantBasics, setRestaurantBasicsState] =
+    useState<RestaurantBasics>(initialRestaurantBasics);
+  const [restaurantDetails, setRestaurantDetailsState] =
+    useState<RestaurantDetails>(initialRestaurantDetails);
+  const [restaurantOperational, setRestaurantOperationalState] =
+    useState<RestaurantOperational>(initialRestaurantOperational);
+
   const setClientBasics = (patch: Partial<ClientBasics>) => {
     setClientBasicsState((prev) => ({
       ...prev,
       ...patch,
-      endereco: {
-        ...prev.endereco,
-        ...(patch.endereco ?? {}),
-      },
+      endereco: { ...prev.endereco, ...(patch.endereco ?? {}) },
     }));
   };
 
@@ -86,10 +161,29 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     setClientPrefsState((prev) => ({ ...prev, ...patch }));
   };
 
+  const setRestaurantBasics = (patch: Partial<RestaurantBasics>) => {
+    setRestaurantBasicsState((prev) => ({
+      ...prev,
+      ...patch,
+      endereco: { ...prev.endereco, ...(patch.endereco ?? {}) },
+    }));
+  };
+
+  const setRestaurantDetails = (patch: Partial<RestaurantDetails>) => {
+    setRestaurantDetailsState((prev) => ({ ...prev, ...patch }));
+  };
+
+  const setRestaurantOperational = (patch: Partial<RestaurantOperational>) => {
+    setRestaurantOperationalState((prev) => ({ ...prev, ...patch }));
+  };
+
   const reset = () => {
     setUserType(null);
     setClientBasicsState(initialBasics);
     setClientPrefsState(initialPrefs);
+    setRestaurantBasicsState(initialRestaurantBasics);
+    setRestaurantDetailsState(initialRestaurantDetails);
+    setRestaurantOperationalState(initialRestaurantOperational);
   };
 
   const value = useMemo<RegistrationContextValue>(
@@ -100,24 +194,24 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
       setClientBasics,
       clientPrefs,
       setClientPrefs,
+
+      restaurantBasics,
+      setRestaurantBasics,
+      restaurantDetails,
+      setRestaurantDetails,
+      restaurantOperational,
+      setRestaurantOperational,
+
       reset,
     }),
-    [userType, clientBasics, clientPrefs],
+    [userType, clientBasics, clientPrefs, restaurantBasics, restaurantDetails, restaurantOperational]
   );
 
-  return (
-    <RegistrationContext.Provider value={value}>
-      {children}
-    </RegistrationContext.Provider>
-  );
+  return <RegistrationContext.Provider value={value}>{children}</RegistrationContext.Provider>;
 }
 
 export function useRegistration() {
   const ctx = useContext(RegistrationContext);
-  if (!ctx) {
-    throw new Error(
-      "useRegistration deve ser usado dentro de <RegistrationProvider>",
-    );
-  }
+  if (!ctx) throw new Error("useRegistration deve ser usado dentro de <RegistrationProvider>");
   return ctx;
 }
