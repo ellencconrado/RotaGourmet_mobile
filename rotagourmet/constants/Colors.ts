@@ -4,8 +4,6 @@
  */
 
 const defaultColor = "#C65323";
-//const inputColor = "#F5F5F5";
-//const borderColor = "#E0E0E0";
 
 export const Colors = {
   light: {
@@ -26,4 +24,4 @@ export const Colors = {
   },
 };
 
-export  {defaultColor};
+export { defaultColor };

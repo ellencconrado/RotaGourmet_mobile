@@ -5,13 +5,14 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
-  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useState } from "react";
 import { globalCadStyles } from "../styles/globalcad";
 import { globalStyles } from "../styles/global";
+import { GenericModal } from "../components/GenericModal";
+import { useModal } from "../hooks/useModal";
 
 export default function NewPasswordScreen() {
   const router = useRouter();
@@ -19,14 +20,12 @@ export default function NewPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-
-  function showModal(message: string) {
-    setModalMessage(message);
-    setModalVisible(true);
-  }
+  const {
+    visible: modalVisible,
+    message: modalMessage,
+    showModal,
+    hideModal,
+  } = useModal();
 
   function requiredValid() {
     return confirmPassword && newPassword === confirmPassword;
@@ -122,26 +121,11 @@ export default function NewPasswordScreen() {
         </View>
       </View>
 
-      <Modal
+      <GenericModal
         visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={globalStyles.modalBackground}>
-          <View style={globalStyles.modalContainer}>
-            <Text style={globalStyles.modalText}>{modalMessage}</Text>
-            <TouchableOpacity
-              style={globalStyles.modalButton}
-              onPress={() => {
-                setModalVisible(false);
-              }}
-            >
-              <Text style={{ color: "white" }}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        message={modalMessage}
+        onClose={hideModal}
+      />
     </SafeAreaView>
   );
 }

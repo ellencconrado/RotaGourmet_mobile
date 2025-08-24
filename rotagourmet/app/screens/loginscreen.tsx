@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Modal,
   Platform,
 } from "react-native";
 import { Image } from "expo-image";
@@ -23,19 +22,20 @@ import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
 import { globalStyles, defaultColor } from "../styles/global";
+import { GenericModal } from "../components/GenericModal";
+import { useModal } from "../hooks/useModal";
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-
-  function showModal(message: string) {
-    setModalMessage(message);
-    setModalVisible(true);
-  }
+  const {
+    visible: modalVisible,
+    message: modalMessage,
+    showModal,
+    hideModal,
+  } = useModal();
 
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -51,7 +51,6 @@ export default function LoginScreen() {
   const redirectUri = makeRedirectUri({ useProxy: true });
 
   const [request, response, promptAsync] = Google.useAuthRequest({
-    // Em Expo Go use apenas expoClientId. Em builds nativas, forneça os ids específicos.
     expoClientId: process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID,
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
@@ -73,7 +72,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       const message =
         error?.message || "Falha ao entrar. Verifique suas credenciais.";
-      showModal("Erro ao entrar" + message);
+      showModal("Erro ao entrar: " + message);
     } finally {
       setLoading(false);
     }
@@ -94,7 +93,7 @@ export default function LoginScreen() {
       router.replace("/home");
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
-      showModal("Erro" + message);
+      showModal("Erro: " + message);
     } finally {
       setGoogleLoading(false);
     }
@@ -120,7 +119,7 @@ export default function LoginScreen() {
       router.replace("/home");
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
-      showModal("Erro" + message);
+      showModal("Erro: " + message);
     } finally {
       setGoogleLoading(false);
     }
@@ -203,7 +202,10 @@ export default function LoginScreen() {
             {googleLoading ? (
               <ActivityIndicator color={defaultColor} />
             ) : (
-              <Ionicons name="logo-google" size={26} color={defaultColor} />
+              <Image
+                source={require("../assets/google.png")}
+                style={{ width: 50, height: 50 }}
+              />
             )}
           </TouchableOpacity>
         </View>
@@ -213,26 +215,11 @@ export default function LoginScreen() {
         <Text style={globalStyles.link}>Criar conta</Text>
       </TouchableOpacity>
 
-      <Modal
+      <GenericModal
         visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={globalStyles.modalBackground}>
-          <View style={globalStyles.modalContainer}>
-            <Text style={globalStyles.modalText}>{modalMessage}</Text>
-            <TouchableOpacity
-              style={globalStyles.modalButton}
-              onPress={() => {
-                setModalVisible(false);
-              }}
-            >
-              <Text style={{ color: "white" }}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        message={modalMessage}
+        onClose={hideModal}
+      />
     </View>
   );
 }

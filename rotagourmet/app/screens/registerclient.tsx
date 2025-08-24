@@ -5,132 +5,108 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Alert
 } from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles, inputColor } from "../styles/global";
+import { globalStyles } from "../styles/global";
 import { globalCadStyles } from "../styles/globalcad";
-import { Picker } from "@react-native-picker/picker";
 import { useRegistration } from "hooks/useRegistration";
+import { GenericModal } from "../components/GenericModal";
+import { useModal } from "../hooks/useModal";
+import { getEnderecoByCep } from "../api/brasilApi";
 
-// ---- helpers de validação BR ----
 const onlyDigits = (s: string) => (s || "").replace(/\D+/g, "");
 
-function isValidCPF(raw: string) {
-  const cpf = onlyDigits(raw);
-  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
-  let sum = 0;
-  for (let i = 0; i < 9; i++) sum += parseInt(cpf[i]) * (10 - i);
-  let d1 = 11 - (sum % 11);
-  if (d1 >= 10) d1 = 0;
-  if (d1 !== parseInt(cpf[9])) return false;
+const validators = {
+  cpf: (raw: string) => {
+    const cpf = onlyDigits(raw);
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += parseInt(cpf[i]) * (10 - i);
+    let d1 = 11 - (sum % 11);
+    if (d1 >= 10) d1 = 0;
+    if (d1 !== parseInt(cpf[9])) return false;
 
-  sum = 0;
-  for (let i = 0; i < 10; i++) sum += parseInt(cpf[i]) * (11 - i);
-  let d2 = 11 - (sum % 11);
-  if (d2 >= 10) d2 = 0;
-  return d2 === parseInt(cpf[10]);
-}
-
-const isValidPhoneBR = (raw: string) => {
-  const d = onlyDigits(raw);
-  // 10 (fixo) ou 11 (celular c/ 9) dígitos
-  return d.length === 10 || d.length === 11;
+    sum = 0;
+    for (let i = 0; i < 10; i++) sum += parseInt(cpf[i]) * (11 - i);
+    let d2 = 11 - (sum % 11);
+    if (d2 >= 10) d2 = 0;
+    return d2 === parseInt(cpf[10]);
+  },
+  phone: (raw: string) => {
+    const d = onlyDigits(raw);
+    return d.length === 10 || d.length === 11;
+  },
+  cep: (raw: string) => onlyDigits(raw).length === 7,
 };
 
-const isValidCEP = (raw: string) => onlyDigits(raw).length === 8;
-// ---------------------------------
+function Label({ text, required }: { text: string; required?: boolean }) {
+  return (
+    <Text style={globalCadStyles.label}>
+      {required ? <Text style={globalCadStyles.required}>* </Text> : null}
+      {text}
+    </Text>
+  );
+}
 
 export default function RegisterClientScreen() {
   const router = useRouter();
   const { setClientBasics } = useRegistration();
-
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cep, setCep] = useState("");
   const [endereco, setEndereco] = useState("");
   const [bairro, setBairro] = useState("");
-  const [numero, setNumero] = useState("");
-
-  const [estados, setEstados] = useState<any[]>([]);
-  const [municipios, setMunicipios] = useState<any[]>([]);
+  const [numero] = useState("");
   const [estadoSelecionado, setEstadoSelecionado] = useState("");
   const [municipioSelecionado, setMunicipioSelecionado] = useState("");
+  const {
+    visible: modalVisible,
+    message: modalMessage,
+    showModal,
+    hideModal,
+  } = useModal();
 
-  // Carrega estados
   useEffect(() => {
-    fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados")
-      .then((res) => res.json())
-      .then((data) => {
-						  
-        const ordenados = data.sort((a: any, b: any) =>
-          a.nome.localeCompare(b.nome)
-        );
-        setEstados(ordenados);
-      })
-      .catch(() => {});
-  }, []);
+    if (!validators.cep(cep)) return;
 
-  // Carrega municípios ao trocar UF
-  useEffect(() => {
-    if (estadoSelecionado) {
-      fetch(
-        `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoSelecionado}/municipios`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          const ordenados = data.sort((a: any, b: any) =>
-            a.nome.localeCompare(b.nome)
-          );
-          setMunicipios(ordenados);
-        })
-        .catch(() => {});
-    } else {
-      setMunicipios([]);
-      setMunicipioSelecionado("");
-    }
-  }, [estadoSelecionado]);
+    const timeout = setTimeout(async () => {
+      try {
+        const data = await getEnderecoByCep(cep);
+        setEndereco(data.logradouro || "");
+        setBairro(data.bairro || "");
+        setEstadoSelecionado(data.estado || "");
+        setMunicipioSelecionado(data.localidade || "");
+      } catch (err: any) {
+        showModal(err.message || "Erro ao buscar CEP.");
+      }
+    }, 500);
 
-  function Label({ text, required }: { text: string; required?: boolean }) {
-    return (
-      <Text style={globalCadStyles.label}>
-        {required ? <Text style={globalCadStyles.required}>* </Text> : null}
-        {text}
-      </Text>
-    );
-  }
+    return () => clearTimeout(timeout);
+  }, [cep, showModal]);
 
-  function requiredValid() {
-    return (
-      nome &&
-      cpf &&
-      telefone &&
-      cep &&
-      endereco &&
-      bairro &&
-      numero &&
-      estadoSelecionado &&
-      municipioSelecionado
-    );
-  }
+  const requiredValid = () =>
+    [
+      nome,
+      cpf,
+      telefone,
+      cep,
+    ].every(Boolean);
 
   function handleNext() {
-    // validações de conteúdo
-    if (!isValidCPF(cpf)) {
-      Alert.alert("CPF inválido", "Verifique o CPF informado.");
+    if (validators.cpf(cpf)) {
+      showModal("CPF inválido. Verifique o CPF informado.");
       return;
     }
-    if (!isValidPhoneBR(telefone)) {
-      Alert.alert("Telefone inválido", "Informe DDD + número (10 ou 11 dígitos).");
+    if (validators.phone(telefone)) {
+      showModal("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).");
       return;
     }
-    if (!isValidCEP(cep)) {
-      Alert.alert("CEP inválido", "O CEP deve ter 8 dígitos numéricos.");
+    if (validators.cep(cep)) {
+      showModal("CEP inválido. O CEP deve ter 8 dígitos numéricos.");
       return;
     }
 
-    // guarda no contexto para a próxima etapa
     setClientBasics({
       nome: nome.trim(),
       cpf: onlyDigits(cpf),
@@ -145,7 +121,6 @@ export default function RegisterClientScreen() {
       },
     });
 
-    // segue para preferências (que só coleta preferências e vai para a final)
     router.push("/screens/registerclientpreferences");
   }
 
@@ -167,6 +142,8 @@ export default function RegisterClientScreen() {
       <TextInput
         style={globalCadStyles.input}
         value={cpf}
+        placeholder="XXX.XXX.XXX-XX"
+        placeholderTextColor="#888"
         onChangeText={(v) => setCpf(onlyDigits(v))}
         keyboardType="number-pad"
       />
@@ -177,6 +154,8 @@ export default function RegisterClientScreen() {
           <TextInput
             style={globalCadStyles.input}
             value={telefone}
+            placeholder="(XX) XXXXX-XXXX"
+            placeholderTextColor="#888"
             onChangeText={(v) => setTelefone(onlyDigits(v))}
             keyboardType="phone-pad"
           />
@@ -187,76 +166,11 @@ export default function RegisterClientScreen() {
           <TextInput
             style={globalCadStyles.input}
             value={cep}
+            placeholder="XXXXX-XXX"
+            placeholderTextColor="#888"
             onChangeText={(v) => setCep(onlyDigits(v))}
             keyboardType="number-pad"
           />
-        </View>
-      </View>
-
-      <Label text="Endereço:" required />
-      <TextInput
-        style={globalCadStyles.input}
-        value={endereco}
-        onChangeText={setEndereco}
-      />
-
-      <View style={globalCadStyles.row}>
-        <View style={globalCadStyles.col}>
-          <Label text="Bairro:" required />
-          <TextInput
-            style={globalCadStyles.input}
-            value={bairro}
-            onChangeText={setBairro}
-          />
-        </View>
-        <View style={globalCadStyles.gap} />
-        <View style={globalCadStyles.col}>
-          <Label text="Número:" required />
-          <TextInput
-            style={globalCadStyles.input}
-            value={numero}
-            onChangeText={(v) => setNumero(onlyDigits(v))}
-            keyboardType="number-pad"
-          />
-        </View>
-      </View>
-
-      <View style={globalCadStyles.row}>
-        <View style={globalCadStyles.col}>
-          <Label text="UF:" required />
-          <View style={globalCadStyles.pickerContainer}>
-            <Picker
-              selectedValue={estadoSelecionado}
-              onValueChange={(v) => setEstadoSelecionado(v)}
-              style={{ backgroundColor: inputColor, borderWidth: 0 }}
-            >
-              <Picker.Item label="Selecione um estado..." value="" color="#777" />
-              {estados.map((e) => (
-                <Picker.Item key={e.id} label={e.nome} value={e.sigla} />
-              ))}
-            </Picker>
-          </View>
-        </View>
-        <View style={globalCadStyles.gap} />
-        <View style={globalCadStyles.col}>
-          <Label text="Município:" required />
-          <View style={globalCadStyles.pickerContainer}>
-            <Picker
-              selectedValue={municipioSelecionado}
-              onValueChange={(v) => setMunicipioSelecionado(String(v))}
-              enabled={!!estadoSelecionado}
-              style={{ backgroundColor: inputColor, borderWidth: 0 }}
-            >
-              <Picker.Item
-                label="Selecione um município..."
-                value=""
-                color="#777"
-              />
-              {municipios.map((m) => (
-                <Picker.Item key={m.id} label={m.nome} value={m.nome} />
-              ))}
-            </Picker>
-          </View>
         </View>
       </View>
 
@@ -269,6 +183,12 @@ export default function RegisterClientScreen() {
       </TouchableOpacity>
 
       <Text style={globalCadStyles.legend}>* Campo Obrigatório</Text>
+
+      <GenericModal
+        visible={modalVisible}
+        message={modalMessage}
+        onClose={hideModal}
+      />
     </ScrollView>
   );
 }

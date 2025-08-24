@@ -1,18 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles, inputColor} from "../styles/global";
+import { globalStyles, inputColor } from "../styles/global";
 import { Picker } from "@react-native-picker/picker";
 import { globalCadStyles } from "../styles/globalcad";
 import { useRegistration } from "hooks/useRegistration";
-import { onlyDigits, isValidCNPJ, isValidPhoneBR, isValidCEP } from "@/utils/br";
-
-
+import {
+  onlyDigits,
+  isValidCNPJ,
+  isValidPhoneBR,
+  isValidCEP,
+} from "@/utils/br";
+import { useModal } from "../hooks/useModal";
+import { GenericModal } from "../components/GenericModal";
+import {
+  getEmpresaByCnpj,
+  getEnderecoByCep,
+  getEstados,
+  getMunicipios,
+} from "../api/brasilApi";
 
 export default function RegisterRestaurantScreen() {
   const router = useRouter();
   const { setRestaurantBasics } = useRegistration();
-
   const [nome, setNome] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -20,48 +36,94 @@ export default function RegisterRestaurantScreen() {
   const [endereco, setEndereco] = useState("");
   const [bairro, setBairro] = useState("");
   const [numero, setNumero] = useState("");
-
   const [estados, setEstados] = useState<any[]>([]);
   const [municipios, setMunicipios] = useState<any[]>([]);
   const [estadoSelecionado, setEstadoSelecionado] = useState("");
   const [municipioSelecionado, setMunicipioSelecionado] = useState("");
+  const {
+    visible: modalVisible,
+    message: modalMessage,
+    showModal,
+    hideModal,
+  } = useModal();
 
   useEffect(() => {
-    fetch("https://servicodados.ibge.gov.br/api/v1/localidades/estados")
-      .then((r) => r.json())
-      .then((data) =>
-        setEstados(data.sort((a: any, b: any) => a.nome.localeCompare(b.nome)))
-      )
-      .catch(() => {});
+    getEstados()
+      .then(setEstados)
+      .catch(() => showModal("Erro ao carregar estados."));
   }, []);
 
   useEffect(() => {
     if (!estadoSelecionado) {
-      setMunicipios([]); setMunicipioSelecionado("");
+      setMunicipios([]);
+      setMunicipioSelecionado("");
       return;
     }
-    fetch(
-      `https://servicodados.ibge.gov.br/api/v1/localidades/estados/${estadoSelecionado}/municipios`
-    )
-      .then((r) => r.json())
-      .then((data) =>
-        setMunicipios(data.sort((a: any, b: any) => a.nome.localeCompare(b.nome)))
-      )
-      .catch(() => {});
-  }, [estadoSelecionado]);
+    getMunicipios(estadoSelecionado)
+      .then(setMunicipios)
+      .catch(() => showModal("Erro ao carregar municípios."));
+  }, [estadoSelecionado, municipioSelecionado]);
+
+  useEffect(() => {
+    async function fetchEnderecoCep() {
+      if (cep.length !== 8) return;
+      try {
+        const data = await getEnderecoByCep(cep);
+        setEndereco(data.logradouro || "");
+        setBairro(data.bairro || "");
+        setMunicipioSelecionado(data.localidade || "");
+        setEstadoSelecionado(data.uf || "");
+      } catch (err: any) {
+        showModal(err.message || "Erro ao buscar CEP.");
+      }
+    }
+
+    async function fetchEmpresaCnpj() {
+      if (cnpj.length !== 14) return;
+      try {
+        const data = await getEmpresaByCnpj(cnpj);
+        setEndereco(data.logradouro || "");
+        setCep(data.cep?.replace(/\D/g, "") || cep);
+        setNumero(data.numero || "");
+        setBairro(data.bairro || "");
+        setMunicipioSelecionado(data.municipio || "");
+        setEstadoSelecionado(data.uf || "");
+      } catch (err: any) {
+        showModal(err.message || "Erro ao buscar CNPJ.");
+      }
+    }
+
+    fetchEnderecoCep();
+    fetchEmpresaCnpj();
+  }, [cep, cnpj]);
 
   function requiredValid() {
     return (
-      nome && cnpj && telefone && cep && endereco && bairro && numero &&
-      estadoSelecionado && municipioSelecionado
+      nome &&
+      cnpj &&
+      telefone &&
+      cep &&
+      endereco &&
+      bairro &&
+      numero &&
+      estadoSelecionado &&
+      municipioSelecionado
     );
   }
 
   function handleNext() {
-    // validações BR (não salva ainda)
-    if (!isValidCNPJ(cnpj)) { Alert.alert("CNPJ inválido", "Verifique o CNPJ informado."); return; }
-    if (!isValidPhoneBR(telefone)) { Alert.alert("Telefone inválido", "Informe DDD + número (10 ou 11 dígitos)."); return; }
-    if (!isValidCEP(cep)) { Alert.alert("CEP inválido", "O CEP deve ter 8 dígitos numéricos."); return; }
+    if (!isValidCNPJ(cnpj)) {
+      showModal("CNPJ inválido. Verifique o CNPJ informado.");
+      return;
+    }
+    if (!isValidPhoneBR(telefone)) {
+      showModal("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).");
+      return;
+    }
+    if (!isValidCEP(cep)) {
+      showModal("CEP inválido: O CEP deve ter 8 dígitos numéricos.");
+      return;
+    }
 
     setRestaurantBasics({
       nome: nome.trim(),
@@ -90,11 +152,18 @@ export default function RegisterRestaurantScreen() {
   }
 
   return (
-    <ScrollView style={globalCadStyles.container} contentContainerStyle={globalCadStyles.content}>
+    <ScrollView
+      style={globalCadStyles.container}
+      contentContainerStyle={globalCadStyles.content}
+    >
       <Text style={globalStyles.title}>Restaurante:</Text>
 
       <Label text="Nome do estabelecimento:" required />
-      <TextInput style={globalCadStyles.input} value={nome} onChangeText={setNome} />
+      <TextInput
+        style={globalCadStyles.input}
+        value={nome}
+        onChangeText={setNome}
+      />
 
       <Label text="CNPJ:" required />
       <TextInput
@@ -127,12 +196,20 @@ export default function RegisterRestaurantScreen() {
       </View>
 
       <Label text="Endereço:" required />
-      <TextInput style={globalCadStyles.input} value={endereco} onChangeText={setEndereco} />
+      <TextInput
+        style={globalCadStyles.input}
+        value={endereco}
+        onChangeText={setEndereco}
+      />
 
       <View style={globalCadStyles.row}>
         <View style={globalCadStyles.col}>
           <Label text="Bairro:" required />
-          <TextInput style={globalCadStyles.input} value={bairro} onChangeText={setBairro} />
+          <TextInput
+            style={globalCadStyles.input}
+            value={bairro}
+            onChangeText={setBairro}
+          />
         </View>
         <View style={globalCadStyles.gap} />
         <View style={globalCadStyles.col}>
@@ -155,7 +232,11 @@ export default function RegisterRestaurantScreen() {
               onValueChange={(v) => setEstadoSelecionado(String(v))}
               style={{ backgroundColor: inputColor, borderWidth: 0 }}
             >
-              <Picker.Item label="Selecione um estado..." value="" color="#777" />
+              <Picker.Item
+                label="Selecione um estado..."
+                value=""
+                color="#777"
+              />
               {estados.map((e) => (
                 <Picker.Item key={e.id} label={e.nome} value={e.sigla} />
               ))}
@@ -174,7 +255,11 @@ export default function RegisterRestaurantScreen() {
               enabled={!!estadoSelecionado}
               style={{ backgroundColor: inputColor, borderWidth: 0 }}
             >
-              <Picker.Item label="Selecione um município..." value="" color="#777" />
+              <Picker.Item
+                label="Selecione um município..."
+                value=""
+                color="#777"
+              />
               {municipios.map((m) => (
                 <Picker.Item key={m.id} label={m.nome} value={m.nome} />
               ))}
@@ -192,6 +277,12 @@ export default function RegisterRestaurantScreen() {
       </TouchableOpacity>
 
       <Text style={globalCadStyles.legend}>* Campo Obrigatório</Text>
+
+      <GenericModal
+        visible={modalVisible}
+        message={modalMessage}
+        onClose={hideModal}
+      />
     </ScrollView>
   );
 }

@@ -69,6 +69,10 @@ export default function RootLayout() {
           options={{ title: "Cadastro" }}
         />
         <Stack.Screen
+          name="screens/registerrestaurantoperational"
+          options={{ title: "Cadastro" }}
+        />
+        <Stack.Screen
           name="screens/registerclient"
           options={{ title: "Cadastro" }}
         />

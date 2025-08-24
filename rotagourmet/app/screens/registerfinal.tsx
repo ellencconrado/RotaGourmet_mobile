@@ -1,258 +1,284 @@
 import React, { useState } from "react";
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Dimensions, Modal,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
-import * as DocumentPicker from "expo-document-picker";
-import { globalCadStyles } from "../styles/globalcad";
-import { globalStyles, defaultColor, inputColor, borderColor } from "../styles/global";
+import { useLocalSearchParams } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import MultiSlider from "@ptomasroos/react-native-multi-slider";
+import { globalStyles } from "../styles/global";
+import { globalCadStyles } from "../styles/globalcad";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { saveClient } from "@/services/saveClient";
 import { useRegistration } from "hooks/useRegistration";
+import { GenericModal } from "../components/GenericModal";
+import { useModal } from "../hooks/useModal";
 
-const diasMap = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+export default function RegisterFinalScreen() {
+  const params = useLocalSearchParams();
+  const userType = (params.type as string) || "client";
+  const { clientBasics, clientPrefs, reset } = useRegistration();
 
-export default function RegisterRestaurantOperationalScreen() {
-  const router = useRouter();
-  const screenWidth = Dimensions.get("window").width;
-  const { setRestaurantOperational } = useRegistration();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const {
+    visible: modalVisible,
+    message: modalMessage,
+    showModal,
+    hideModal,
+  } = useModal();
 
-  const [reserva, setReserva] = useState(false);
-  const [fila, setFila] = useState(false);
-  const [filas, setFilas] = useState([{ nome: "Fila 1", ativo: false }]);
-  const [diasFuncionamento, setDiasFuncionamento] = useState(
-    diasMap.reduce((acc, d) => ({ ...acc, [d]: false }), {} as Record<string, boolean>)
-  );
-  const [horarioAbertura, setHorarioAbertura] = useState("08:00");
-  const [horarioFechamento, setHorarioFechamento] = useState("22:00");
-  const [cardapioUri, setCardapioUri] = useState<string | null>(null);
-  const [cardapioNome, setCardapioNome] = useState<string>("");
-  const [precoMinimo, setPrecoMinimo] = useState(20);
-  const [precoMaximo, setPrecoMaximo] = useState(80);
+  const forceEnable = false;
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-  const showModal = (m: string) => { setModalMessage(m); setModalVisible(true); };
+  function requiredValid() {
+    return !!(
+      email &&
+      password &&
+      confirmPassword &&
+      password === confirmPassword
+    );
+  }
 
-  const validarHorario = (h: string) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(h);
+  function validateEmail(v: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  }
 
-  const requiredValid = () =>
-    (reserva || fila) && Object.values(diasFuncionamento).some(Boolean) && !!cardapioUri;
+  function validatePassword(v: string) {
+    if (v.length < 6) return false;
+    return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])/.test(v);
+  }
 
-  const handleNext = () => {
-    if (!validarHorario(horarioAbertura) || !validarHorario(horarioFechamento)) {
-      showModal("Horário inválido. Digite no formato HH:mm (00:00 - 23:59)");
-      return;
+  async function handleFinalizeRegistration() {
+    console.log("[registerfinal] botão clicado", {
+      email,
+      required: requiredValid(),
+    });
+    if (Platform.OS === "web") {
+      showModal("Clique no botão recebido!");
+    } else {
+      showModal("Debug: Clique no botão recebido!");
     }
 
-    setRestaurantOperational({
-      reserva,
-      fila,
-      filas,
-      diasFuncionamento,
-      horarioAbertura,
-      horarioFechamento,
-      cardapioUri,
-      cardapioNome,
-      precoMinimo,
-      precoMaximo,
-    });
-
-    router.push("/screens/registerfinal?type=restaurant");
-  };
-
-  const handlePickCardapio = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["application/pdf", "image/*"],
-      copyToCacheDirectory: true,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setCardapioUri(result.assets[0].uri);
-      setCardapioNome(result.assets[0].name || "Cardápio");
+    if (!forceEnable) {
+      if (!validateEmail(email)) {
+        showModal("Por favor, insira um email válido.");
+        return;
+      }
+      if (!validatePassword(password)) {
+        showModal(
+          "A senha precisa ter no mínimo 6 caracteres e incluir letras, números e símbolos para maior segurança."
+        );
+        return;
+      }
+      if (password !== confirmPassword) {
+        showModal("As senhas não coincidem.");
+        return;
+      }
     }
-  };
+    try {
+      setLoading(true);
 
-  const toggleDia = (dia: string) =>
-    setDiasFuncionamento((prev) => ({ ...prev, [dia]: !prev[dia] }));
+      const cred = await createUserWithEmailAndPassword(
+        auth,
+        email.trim(),
+        password
+      );
+      if (__DEV__) console.log("Auth OK:", cred.user.uid);
 
-  const adicionarFila = () =>
-    setFilas((prev) => [...prev, { nome: `Fila ${prev.length + 1}`, ativo: false }]);
+      if (userType === "client") {
+        const b = clientBasics;
+        if (
+          !b?.nome ||
+          !b?.cpf ||
+          !b?.endereco?.cep ||
+          !b?.endereco?.uf ||
+          !b?.endereco?.municipio
+        ) {
+          showModal("Complete os dados do cliente nas etapas anteriores.");
+          setLoading(false);
+          return;
+        }
 
-  const toggleFilaAtivo = (index: number) =>
-    setFilas((prev) => prev.map((f, i) => (i === index ? { ...f, ativo: !f.ativo } : f)));
+        await saveClient({
+          nome: b.nome,
+          telefone: b.telefone,
+          cpf: b.cpf,
+          cep: b.endereco.cep,
+          endereco: b.endereco.logradouro,
+          bairro: b.endereco.bairro,
+          numero: b.endereco.numero,
+          uf: b.endereco.uf,
+          municipio: b.endereco.municipio,
+          prefs: clientPrefs.preferencias,
+          alergias: clientPrefs.alergiasObs || null,
+        });
+      }
 
-  const renomearFila = (index: number, nome: string) =>
-    setFilas((prev) => prev.map((f, i) => (i === index ? { ...f, nome } : f)));
+      reset();
+      showModal(
+        `Cadastro de ${
+          userType === "client" ? "cliente" : "restaurante"
+        } finalizado com sucesso!`
+      );
+    } catch (e: any) {
+      if (__DEV__) console.error("[registerfinal] erro:", e);
+      const code = e?.code || "";
+      const msg =
+        code === "auth/email-already-in-use"
+          ? "Este e-mail já está em uso."
+          : code === "permission-denied"
+          ? "Permissão negada nas regras do Firestore."
+          : code === "invalid-argument" ||
+            /invalid-argument/i.test(e?.message || "")
+          ? "Dados inválidos para salvar no Firestore. Verifique CPF/CEP e campos obrigatórios."
+          : e?.message || "Falha ao finalizar cadastro.";
+      showModal(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const Label = ({ text, required }: { text: string; required?: boolean }) => (
-    <Text style={globalCadStyles.label}>
-      {required && <Text style={globalCadStyles.required}>* </Text>}
-      {text}
-    </Text>
-  );
+  function Label({ text, required }: { text: string; required?: boolean }) {
+    return (
+      <Text style={globalCadStyles.label}>
+        {required ? <Text style={globalCadStyles.required}>* </Text> : null}
+        {text}
+      </Text>
+    );
+  }
+
+  const getTitle = () => (userType === "client" ? "Cliente:" : "Restaurante:");
+
+  const canPress = forceEnable || requiredValid();
 
   return (
-    <ScrollView style={globalCadStyles.container} contentContainerStyle={globalCadStyles.content}>
-      <Text style={globalStyles.title}>Restaurante:</Text>
+    <ScrollView
+      style={globalCadStyles.container}
+      contentContainerStyle={globalCadStyles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={globalStyles.title}>{getTitle()}</Text>
 
-      <Label text="Opções de Atendimento:" />
-      <View style={{ marginTop: 8 }}>
-        {["Reserva", "Fila"].map((opcao) => (
-          <TouchableOpacity
-            key={opcao}
-            style={styles.addContainer}
-            onPress={() => (opcao === "Reserva" ? setReserva(!reserva) : setFila(!fila))}
-          >
-            <View
-              style={[styles.checkboxInner, (opcao === "Reserva" ? reserva : fila) && styles.checkboxChecked]}
-            />
-            <Text style={styles.checkboxLabel}>{opcao}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {fila && (
-        <>
-          <TouchableOpacity style={{ marginTop: 10, marginBottom: 5 }} onPress={adicionarFila}>
-            <Text style={[styles.infoText, { color: defaultColor }]}>+Adicionar Fila</Text>
-          </TouchableOpacity>
-          {filas.map((f, i) => (
-            <View key={i} style={{ marginLeft: 20, marginBottom: 4 }}>
-              <TouchableOpacity style={styles.addContainer} onPress={() => toggleFilaAtivo(i)}>
-                <View style={[styles.checkboxInner, f.ativo && styles.checkboxChecked]} />
-                <TextInput
-                  value={f.nome}
-                  onChangeText={(text) => renomearFila(i, text)}
-                  style={{ borderBottomWidth: 1, flex: 1 }}
-                />
-              </TouchableOpacity>
-            </View>
-          ))}
-          <Text style={[styles.instruction, { textAlign: "left", marginLeft: 20, marginBottom: 8 }]}>
-            <Text style={globalCadStyles.required}>*</Text> Toque no nome para renomear
-          </Text>
-        </>
-      )}
-
-      <Label text="Dias de Atendimento:" required />
-      <View style={styles.spaceContainer}>
-        {diasMap.map((dia) => (
-          <TouchableOpacity
-            key={dia}
-            style={[styles.diaCheckbox, diasFuncionamento[dia] && { backgroundColor: defaultColor }]}
-            onPress={() => toggleDia(dia)}
-          >
-            <Text
-              style={[
-                styles.infoText,
-                { fontSize: 12 },
-                diasFuncionamento[dia] && { color: "#fff", fontWeight: "700" },
-              ]}
-            >
-              {dia.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Label text="Horário:" required />
-      <View style={styles.addContainer}>
+      <Label text="Email:" required />
+      <View style={styles.inputContainer}>
         <TextInput
-          style={styles.timeInput}
-          value={horarioAbertura}
-          onChangeText={setHorarioAbertura}
-          placeholder="08:00"
-          keyboardType="numeric"
+          style={[globalCadStyles.input, loading && { opacity: 0.6 }]}
+          editable={!loading}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="seu@email.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="next"
         />
-        <Text style={styles.horarioSeparator}>às</Text>
-        <TextInput
-          style={styles.timeInput}
-          value={horarioFechamento}
-          onChangeText={setHorarioFechamento}
-          placeholder="22:00"
-          keyboardType="numeric"
+        <Ionicons
+          name="mail-outline"
+          size={20}
+          color="#666"
+          style={styles.icon}
         />
       </View>
 
-      <Label text="Adicionar Cardápio:" />
-      <TouchableOpacity style={styles.cardapioUpload} onPress={handlePickCardapio}>
-        {cardapioUri ? (
-          <View style={{ alignItems: "center" }}>
-            <Text style={styles.cardapioNome}>{cardapioNome}</Text>
-            <Text style={styles.instruction}>Arquivo selecionado</Text>
-          </View>
-        ) : (
-          <View style={{ alignItems: "center" }}>
-            <Ionicons name="document" size={50} color="#888" />
-            <Text style={styles.infoText}>Selecionar arquivo</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-      <Text style={styles.instruction}>
-        <Text style={globalCadStyles.required}>*</Text> Permite arquivo pdf, jpeg, png...
-      </Text>
+      <Label text="Senha:" required />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[globalCadStyles.input, loading && { opacity: 0.6 }]}
+          editable={!loading}
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Mínimo 6 caracteres"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          returnKeyType="next"
+        />
+        <TouchableOpacity
+          onPress={() => setShowPassword(!showPassword)}
+          style={styles.icon}
+        >
+          <Ionicons
+            name={showPassword ? "eye" : "eye-off"}
+            size={24}
+            color="#888"
+          />
+        </TouchableOpacity>
+      </View>
 
-      <Label text="Média de Preço:" />
-      <MultiSlider
-        values={[precoMinimo, precoMaximo]}
-        min={0}
-        max={500}
-        step={1}
-        sliderLength={screenWidth - 40}
-        onValuesChange={(vals: number[]) => { setPrecoMinimo(vals[0]); setPrecoMaximo(vals[1]); }}
-        selectedStyle={{ backgroundColor: defaultColor, height: 3 }}
-        unselectedStyle={{ backgroundColor: borderColor }}
-        markerStyle={{ backgroundColor: defaultColor }}
-      />
-      <View style={styles.spaceContainer}>
-        <Text style={styles.precoText}>R$ {precoMinimo.toFixed(2).replace(".", ",")}</Text>
-        <Text style={styles.precoText}>R$ {precoMaximo.toFixed(2).replace(".", ",")}</Text>
+      <Label text="Confirme a senha:" required />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[globalCadStyles.input, loading && { opacity: 0.6 }]}
+          editable={!loading}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          placeholder="Digite a senha novamente"
+          secureTextEntry={!showConfirmPassword}
+          autoCapitalize="none"
+          returnKeyType="done"
+        />
+        <TouchableOpacity
+          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+          style={styles.icon}
+        >
+          <Ionicons
+            name={showConfirmPassword ? "eye" : "eye-off"}
+            size={24}
+            color="#888"
+          />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.passwordInfo}>
+        <Text style={styles.passwordInfoText}>
+          • A senha deve ter pelo menos 6 caracteres
+        </Text>
+        <Text style={styles.passwordInfoText}>
+          • Use letras, números e símbolos para maior segurança
+        </Text>
       </View>
 
       <TouchableOpacity
-        style={[globalStyles.button, !requiredValid() && { opacity: 0.5 }]}
-        disabled={!requiredValid()}
-        onPress={handleNext}
+        style={[
+          globalStyles.button,
+          (!canPress || loading) && { opacity: 0.5 },
+        ]}
+        disabled={!canPress || loading}
+        onPress={handleFinalizeRegistration}
+        accessibilityRole="button"
       >
-        <Text style={globalStyles.buttonlabel}>Finalizar Cadastro</Text>
+        <Text style={globalStyles.buttonlabel}>
+          {loading ? "Salvando..." : "Finalizar Cadastro"}
+        </Text>
       </TouchableOpacity>
+
       <Text style={globalCadStyles.legend}>* Campo Obrigatório</Text>
 
-      <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
-        <View style={globalStyles.modalBackground}>
-          <View style={globalStyles.modalContainer}>
-            <Text style={globalStyles.modalText}>{modalMessage}</Text>
-            <TouchableOpacity style={globalStyles.modalButton} onPress={() => setModalVisible(false)}>
-              <Text style={{ color: "white" }}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <GenericModal
+        visible={modalVisible}
+        message={modalMessage}
+        onClose={hideModal}
+      />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  addContainer: { flexDirection: "row", alignItems: "center", marginTop: 8 },
-  checkboxInner: {
-    width: 20, height: 20, borderWidth: 2, borderColor: defaultColor, borderRadius: 4, marginRight: 8,
+  inputContainer: { position: "relative", marginTop: 8 },
+  icon: {
+    position: "absolute",
+    top: "50%",
+    right: 20,
+    transform: [{ translateY: -12 }],
   },
-  checkboxChecked: { backgroundColor: defaultColor },
-  checkboxLabel: { fontSize: 14 },
-  instruction: { fontSize: 11, color: "#666", marginTop: 8, textAlign: "center" },
-  spaceContainer: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
-  diaCheckbox: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: inputColor, alignItems: "center", justifyContent: "center",
-  },
-  infoText: { fontSize: 14, fontWeight: "600", color: "#666" },
-  timeInput: {
-    backgroundColor: inputColor, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, minWidth: 80, textAlign: "center",
-  },
-  horarioSeparator: { marginHorizontal: 16, fontSize: 14, color: "#666" },
-  cardapioUpload: {
-    backgroundColor: borderColor, borderRadius: 12, height: 120, alignItems: "center", justifyContent: "center",
-    marginTop: 8, borderWidth: 2, borderColor: inputColor, borderStyle: "dashed",
-  },
-  cardapioNome: { fontSize: 16, fontWeight: "600", marginBottom: 4 },
-  precoText: { fontSize: 14, color: defaultColor, fontWeight: "bold" },
+  passwordInfo: { marginTop: 12, marginLeft: 8 },
+  passwordInfoText: { fontSize: 11, color: "#666", marginBottom: 2 },
 });

@@ -1,22 +1,17 @@
 // app/screens/registerclientpreferences.tsx
 import React, { useState } from "react";
-import {
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
+import { ScrollView, Text, TextInput, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { globalStyles} from "../styles/global";
+import { globalStyles } from "../styles/global";
 import { globalCadStyles } from "../styles/globalcad";
-import { cuisines } from "../../constants/cuisines";
+import { cuisines } from "../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
 import { defaultColor } from "@/constants/Colors";
 import { useRegistration } from "hooks/useRegistration";
 
 export default function RegisterClientPreferencesScreen() {
   const router = useRouter();
-  const { setClientPrefs } = useRegistration(); // <-- salva no contexto
+  const { setClientPrefs } = useRegistration(); 
   const [alergias, setAlergias] = useState("");
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
 
@@ -25,7 +20,6 @@ export default function RegisterClientPreferencesScreen() {
   }
 
   function handleNext() {
-    // guarda no contexto para a tela final usar ao salvar no Firestore
     setClientPrefs({
       preferencias: selectedPreferences,
       alergiasObs: alergias.trim(),
@@ -59,7 +53,7 @@ export default function RegisterClientPreferencesScreen() {
         displayKey="name"
         searchInputStyle={{ color: "#777" }}
         submitButtonColor={defaultColor}
-        submitButtonText="Confirmar"
+        submitButtonText="Confirmar"        
         styleDropdownMenu={globalCadStyles.pickerContainer}
       />
 
@@ -70,10 +64,7 @@ export default function RegisterClientPreferencesScreen() {
         onChangeText={setAlergias}
       />
 
-					   
       <TouchableOpacity style={globalStyles.button} onPress={handleNext}>
-																		 
-	   
         <Text style={globalStyles.buttonlabel}>Próximo</Text>
       </TouchableOpacity>
     </ScrollView>

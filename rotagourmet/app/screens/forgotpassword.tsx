@@ -6,37 +6,34 @@ import {
   TextInput,
   TouchableOpacity,
   SafeAreaView,
-  Modal,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "lib/firebase";
 import { borderColor, globalStyles, inputColor } from "../styles/global";
+import { GenericModal } from "../components/GenericModal";
+import { useModal } from "../hooks/useModal";
 
 export default function ForgotPassword() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
-  const [onModalOk, setOnModalOk] = useState<(() => void) | null>(null);
-
-  const showModal = (message: string, onOk?: () => void) => {
-    setModalMessage(message);
-    setOnModalOk(() => onOk || null);
-    setModalVisible(true);
-  };
-
+  const {
+    visible: modalVisible,
+    message: modalMessage,
+    showModal,
+    hideModal,
+  } = useModal();
   const handleSend = async () => {
     const value = email.trim().toLowerCase();
     if (!value) {
-      showModal("Atenção. Por favor, informe seu email.");
+      showModal("Atenção: Por favor, informe seu email.");
       return;
     }
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     if (!isEmail) {
-      showModal("Atenção. Digite um email válido.");
+      showModal("Atenção: Digite um email válido.");
       return;
     }
 
@@ -52,15 +49,20 @@ export default function ForgotPassword() {
       let message = "Não foi possível enviar o email de redefinição.";
       switch (error?.code) {
         case "auth/invalid-email":
-          message = "O email informado é inválido."; break;
+          message = "O email informado é inválido.";
+          break;
         case "auth/user-not-found":
-          message = "Não encontramos uma conta com esse email."; break;
+          message = "Não encontramos uma conta com esse email.";
+          break;
         case "auth/too-many-requests":
-          message = "Muitas tentativas. Tente novamente mais tarde ou verifique seu email."; break;
+          message =
+            "Muitas tentativas. Tente novamente mais tarde ou verifique seu email.";
+          break;
         case "auth/network-request-failed":
-          message = "Falha de rede. Verifique sua conexão e tente novamente."; break;
+          message = "Falha de rede. Verifique sua conexão e tente novamente.";
+          break;
       }
-      showModal("Atenção. " + message);
+      showModal("Atenção: " + message);
     } finally {
       setLoading(false);
     }
@@ -99,29 +101,11 @@ export default function ForgotPassword() {
           )}
         </TouchableOpacity>
       </View>
-
-      <Modal
+      <GenericModal
         visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={globalStyles.modalBackground}>
-          <View style={globalStyles.modalContainer}>
-            <Text style={globalStyles.modalText}>{modalMessage}</Text>
-            <TouchableOpacity
-              style={globalStyles.modalButton}
-              onPress={() => {
-                setModalVisible(false);
-                onModalOk?.();
-                setOnModalOk(null);
-              }}
-            >
-              <Text style={{ color: "#fff" }}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        message={modalMessage}
+        onClose={hideModal}
+      />
     </SafeAreaView>
   );
 }
