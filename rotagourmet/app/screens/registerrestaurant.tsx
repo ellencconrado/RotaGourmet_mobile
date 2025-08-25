@@ -169,6 +169,7 @@ export default function RegisterRestaurantScreen() {
       <TextInput
         style={globalCadStyles.input}
         value={cnpj}
+        placeholder="XX.XXX.XXX/XXXX-XX"
         onChangeText={(v) => setCnpj(onlyDigits(v))}
         keyboardType="number-pad"
       />
@@ -179,6 +180,7 @@ export default function RegisterRestaurantScreen() {
           <TextInput
             style={globalCadStyles.input}
             value={telefone}
+            placeholder="(XX) XXXXX-XXXX"
             onChangeText={(v) => setTelefone(onlyDigits(v))}
             keyboardType="phone-pad"
           />
@@ -189,6 +191,7 @@ export default function RegisterRestaurantScreen() {
           <TextInput
             style={globalCadStyles.input}
             value={cep}
+            placeholder="XXXXX-XXX"
             onChangeText={(v) => setCep(onlyDigits(v))}
             keyboardType="number-pad"
           />

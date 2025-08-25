@@ -8,23 +8,43 @@ import { cuisines } from "../constants/cuisines";
 import MultiSelect from "react-native-multiple-select";
 import { defaultColor } from "@/constants/Colors";
 import { useRegistration } from "hooks/useRegistration";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 export default function RegisterClientPreferencesScreen() {
   const router = useRouter();
-  const { setClientPrefs } = useRegistration(); 
-  const [alergias, setAlergias] = useState("");
-  const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
+  const { clientPrefs, setClientPrefs, isEditMode, setIsEditMode } =
+    useRegistration();
+  const [alergias, setAlergias] = useState(
+    isEditMode ? (clientPrefs?.alergiasObs ?? "") : ""
+  );
+  const [selectedPreferences, setSelectedPreferences] = useState<string[]>(
+    isEditMode ? (clientPrefs?.preferencias ?? []) : []
+  );
 
   function Label({ text }: { text: string }) {
     return <Text style={globalCadStyles.label}>{text}</Text>;
   }
 
-  function handleNext() {
+  async function handleNext() {
     setClientPrefs({
       preferencias: selectedPreferences,
       alergiasObs: alergias.trim(),
     });
-    router.push("/screens/registerfinal?type=client");
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const userDocRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userDocRef);
+
+    if (userSnap.exists() && userSnap.data().isGoogleUser) {
+      router.replace("/home?type=client");
+    } else if (isEditMode) {
+      setIsEditMode(false);
+      router.replace("/home?type=client");
+    } else {
+      router.push("/screens/registerfinal?type=client");
+    }
   }
 
   return (
@@ -53,7 +73,7 @@ export default function RegisterClientPreferencesScreen() {
         displayKey="name"
         searchInputStyle={{ color: "#777" }}
         submitButtonColor={defaultColor}
-        submitButtonText="Confirmar"        
+        submitButtonText="Confirmar"
         styleDropdownMenu={globalCadStyles.pickerContainer}
       />
 
@@ -65,7 +85,7 @@ export default function RegisterClientPreferencesScreen() {
       />
 
       <TouchableOpacity style={globalStyles.button} onPress={handleNext}>
-        <Text style={globalStyles.buttonlabel}>Próximo</Text>
+        <Text style={globalStyles.buttonlabel}>Finalizar Cadastro</Text>
       </TouchableOpacity>
     </ScrollView>
   );

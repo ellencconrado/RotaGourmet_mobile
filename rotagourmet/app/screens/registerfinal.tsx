@@ -136,11 +136,11 @@ export default function RegisterFinalScreen() {
         code === "auth/email-already-in-use"
           ? "Este e-mail já está em uso."
           : code === "permission-denied"
-          ? "Permissão negada nas regras do Firestore."
-          : code === "invalid-argument" ||
-            /invalid-argument/i.test(e?.message || "")
-          ? "Dados inválidos para salvar no Firestore. Verifique CPF/CEP e campos obrigatórios."
-          : e?.message || "Falha ao finalizar cadastro.";
+            ? "Permissão negada nas regras do Firestore."
+            : code === "invalid-argument" ||
+                /invalid-argument/i.test(e?.message || "")
+              ? "Dados inválidos para salvar no Firestore. Verifique CPF/CEP e campos obrigatórios."
+              : e?.message || "Falha ao finalizar cadastro.";
       showModal(msg);
     } finally {
       setLoading(false);
@@ -256,7 +256,7 @@ export default function RegisterFinalScreen() {
         accessibilityRole="button"
       >
         <Text style={globalStyles.buttonlabel}>
-          {loading ? "Salvando..." : "Finalizar Cadastro"}
+          {loading ? "Salvando..." : "Salvar Senha"}
         </Text>
       </TouchableOpacity>
 

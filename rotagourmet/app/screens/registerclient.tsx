@@ -13,6 +13,8 @@ import { useRegistration } from "hooks/useRegistration";
 import { GenericModal } from "../components/GenericModal";
 import { useModal } from "../hooks/useModal";
 import { getEnderecoByCep } from "../api/brasilApi";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 const onlyDigits = (s: string) => (s || "").replace(/\D+/g, "");
 
@@ -36,7 +38,7 @@ const validators = {
     const d = onlyDigits(raw);
     return d.length === 10 || d.length === 11;
   },
-  cep: (raw: string) => onlyDigits(raw).length === 7,
+  cep: (raw: string) => onlyDigits(raw).length === 8,
 };
 
 function Label({ text, required }: { text: string; required?: boolean }) {
@@ -50,22 +52,63 @@ function Label({ text, required }: { text: string; required?: boolean }) {
 
 export default function RegisterClientScreen() {
   const router = useRouter();
-  const { setClientBasics } = useRegistration();
-  const [nome, setNome] = useState("");
-  const [cpf, setCpf] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [cep, setCep] = useState("");
-  const [endereco, setEndereco] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [numero] = useState("");
-  const [estadoSelecionado, setEstadoSelecionado] = useState("");
-  const [municipioSelecionado, setMunicipioSelecionado] = useState("");
+  const { clientBasics, setClientBasics, isEditMode, setIsEditMode } =
+    useRegistration();
+  const [nome, setNome] = useState(
+    isEditMode ? (clientBasics?.nome ?? "") : ""
+  );
+  const [cpf, setCpf] = useState(isEditMode ? (clientBasics?.cpf ?? "") : "");
+  const [telefone, setTelefone] = useState(
+    isEditMode ? (clientBasics?.telefone ?? "") : ""
+  );
+  const [cep, setCep] = useState(
+    isEditMode ? (clientBasics?.endereco?.cep ?? "") : ""
+  );
+  const [endereco, setEndereco] = useState(
+    isEditMode ? (clientBasics?.endereco?.logradouro ?? "") : ""
+  );
+  const [bairro, setBairro] = useState(
+    isEditMode ? (clientBasics?.endereco?.bairro ?? "") : ""
+  );
+  const [numero] = useState(
+    isEditMode ? (clientBasics?.endereco?.numero ?? "") : ""
+  );
+  const [estadoSelecionado, setEstadoSelecionado] = useState(
+    isEditMode ? (clientBasics?.endereco?.uf ?? "") : ""
+  );
+  const [municipioSelecionado, setMunicipioSelecionado] = useState(
+    isEditMode ? (clientBasics?.endereco?.municipio ?? "") : ""
+  );
   const {
     visible: modalVisible,
     message: modalMessage,
     showModal,
     hideModal,
   } = useModal();
+
+  useEffect(() => {
+    if (!isEditMode) return;
+    const user = auth.currentUser;
+    if (user) {
+      setNome(user.displayName ?? "");
+      setCpf(""); // CPF provavelmente você armazena no Firestore
+      setTelefone(""); // Telefone também
+      // Buscar dados adicionais do Firestore
+      const docRef = doc(db, "users", user.uid);
+      getDoc(docRef).then((snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          setCpf(data.cpf ?? "");
+          setTelefone(data.telefone ?? "");
+          setCep(data.endereco?.cep ?? "");
+          setEndereco(data.endereco?.logradouro ?? "");
+          setBairro(data.endereco?.bairro ?? "");
+          setEstadoSelecionado(data.endereco?.uf ?? "");
+          setMunicipioSelecionado(data.endereco?.municipio ?? "");
+        }
+      });
+    }
+  }, [isEditMode]);
 
   useEffect(() => {
     if (!validators.cep(cep)) return;
@@ -85,24 +128,18 @@ export default function RegisterClientScreen() {
     return () => clearTimeout(timeout);
   }, [cep, showModal]);
 
-  const requiredValid = () =>
-    [
-      nome,
-      cpf,
-      telefone,
-      cep,
-    ].every(Boolean);
+  const requiredValid = () => [nome, cpf, telefone, cep].every(Boolean);
 
   function handleNext() {
-    if (validators.cpf(cpf)) {
+    if (!validators.cpf(cpf)) {
       showModal("CPF inválido. Verifique o CPF informado.");
       return;
     }
-    if (validators.phone(telefone)) {
+    if (!validators.phone(telefone)) {
       showModal("Telefone inválido. Informe DDD + número (10 ou 11 dígitos).");
       return;
     }
-    if (validators.cep(cep)) {
+    if (!validators.cep(cep)) {
       showModal("CEP inválido. O CEP deve ter 8 dígitos numéricos.");
       return;
     }
@@ -120,6 +157,7 @@ export default function RegisterClientScreen() {
         uf: estadoSelecionado,
       },
     });
+    setIsEditMode(false); 
 
     router.push("/screens/registerclientpreferences");
   }

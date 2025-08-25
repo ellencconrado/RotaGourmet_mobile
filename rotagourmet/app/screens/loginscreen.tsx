@@ -17,7 +17,8 @@ import {
   signInWithPopup,
   signInWithCredential,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from "expo-auth-session";
@@ -89,8 +90,11 @@ export default function LoginScreen() {
     try {
       setGoogleLoading(true);
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.replace("/home");
+      // await signInWithPopup(auth, provider);
+      // router.replace("/home");
+      const result = await signInWithPopup(auth, provider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      await handleGoogleSignIn(credential, router, showModal, setGoogleLoading);
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
       showModal("Erro: " + message);
@@ -107,7 +111,6 @@ export default function LoginScreen() {
 
     try {
       setGoogleLoading(true);
-      // useProxy garante redirecionamento válido no Expo Go e emuladores
       const result = await promptAsync({ useProxy: true });
       if (!result?.type || result.type !== "success") return;
       const idToken = (result as any)?.authentication?.idToken;
@@ -115,11 +118,45 @@ export default function LoginScreen() {
       if (!idToken && !accessToken)
         throw new Error("Não foi possível obter o token do Google.");
       const credential = GoogleAuthProvider.credential(idToken, accessToken);
-      await signInWithCredential(auth, credential);
-      router.replace("/home");
+      //  await signInWithCredential(auth, credential);
+      //  router.replace("/home");
+      await handleGoogleSignIn(credential, router, showModal, setGoogleLoading);
     } catch (error: any) {
       const message = error?.message || "Falha ao entrar com Google.";
       showModal("Erro: " + message);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn(
+    credential: any,
+    router: any,
+    showModal: (msg: string) => void,
+    setGoogleLoading: (b: boolean) => void
+  ) {
+    try {
+      setGoogleLoading(true);
+      const userCredential = await signInWithCredential(auth, credential);
+      const user = userCredential.user;
+
+      // Checar se o usuário já existe no Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userDocRef);
+
+      if (!userSnap.exists()) {
+        await setDoc(userDocRef, {
+          email: user.email,
+          name: user.displayName || "",
+          createdAt: new Date(),
+          isGoogleUser: true,
+        });
+        router.replace("/screens/registertype");
+      } else {
+        router.replace("/home");
+      }
+    } catch (error: any) {
+      showModal("Erro: " + (error?.message || "Falha ao entrar com Google."));
     } finally {
       setGoogleLoading(false);
     }

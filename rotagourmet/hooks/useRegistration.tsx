@@ -50,9 +50,7 @@ export type RestaurantOperational = {
   reserva: boolean;
   fila: boolean;
   filas: { nome: string; ativo: boolean }[];
-  diasFuncionamento: Record<string, boolean>; // dom..sab
-  //horarioAbertura: string; // "08:00"
-  //horarioFechamento: string; // "22:00"
+  diasFuncionamento: Record<string, boolean>;
   horarios: Record<string, { abertura: string; fechamento: string }>;
   cardapioUri: string | null;
   cardapioNome: string;
@@ -80,6 +78,9 @@ type RegistrationContextValue = {
 
   restaurantOperational: RestaurantOperational;
   setRestaurantOperational: (patch: Partial<RestaurantOperational>) => void;
+
+  isEditMode: boolean;
+  setIsEditMode: (v: boolean) => void;
 
   reset: () => void;
 };
@@ -124,27 +125,14 @@ const initialRestaurantDetails: RestaurantDetails = {
 const diasMap = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
 
 const horariosIniciais = Object.fromEntries(
-  diasMap.map(dia => [dia, { abertura: "08:00", fechamento: "22:00" }])
+  diasMap.map((dia) => [dia, { abertura: "08:00", fechamento: "22:00" }])
 );
 
 const initialRestaurantOperational: RestaurantOperational = {
   reserva: false,
   fila: false,
   filas: [],
- // diasFuncionamento: {
- //   dom: false,
- //   seg: false,
- //   ter: false,
- //   qua: false,
- //   qui: false,
- //   sex: false,
- //   sab: false,
- // },  
-  //horarioAbertura: "08:00",
-  //horarioFechamento: "22:00",
-  //diasFuncionamento: diasMap.reduce((acc, dia) => ({ ...acc, [dia]: false }), {} as Record<string, boolean>),
-  //horarios: horariosIniciais,
-  diasFuncionamento: Object.fromEntries(diasMap.map(d => [d, false])),
+  diasFuncionamento: Object.fromEntries(diasMap.map((d) => [d, false])),
   horarios: { ...horariosIniciais },
   cardapioUri: null,
   cardapioNome: "",
@@ -208,6 +196,8 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
     setRestaurantOperationalState(initialRestaurantOperational);
   };
 
+  const [isEditMode, setIsEditMode] = useState(false);
+
   const value = useMemo<RegistrationContextValue>(
     () => ({
       userType,
@@ -216,14 +206,14 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
       setClientBasics,
       clientPrefs,
       setClientPrefs,
-
       restaurantBasics,
       setRestaurantBasics,
       restaurantDetails,
       setRestaurantDetails,
       restaurantOperational,
       setRestaurantOperational,
-
+      isEditMode,
+      setIsEditMode,
       reset,
     }),
     [
@@ -233,6 +223,7 @@ export function RegistrationProvider({ children }: { children: ReactNode }) {
       restaurantBasics,
       restaurantDetails,
       restaurantOperational,
+      isEditMode,
     ]
   );
 

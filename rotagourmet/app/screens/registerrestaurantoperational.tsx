@@ -23,6 +23,8 @@ import MultiSlider from "@ptomasroos/react-native-multi-slider";
 import { useRegistration } from "hooks/useRegistration";
 import { useModal } from "../hooks/useModal";
 import { GenericModal } from "../components/GenericModal";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 
 const diasMap = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
 
@@ -70,7 +72,7 @@ export default function RegisterRestaurantOperationalScreen() {
 
   const requiredValid = () => Object.values(diasFuncionamento).some(Boolean);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     for (const dia of diasMap) {
       if (diasFuncionamento[dia]) {
         if (
@@ -95,7 +97,21 @@ export default function RegisterRestaurantOperationalScreen() {
       precoMaximo,
     });
 
-    router.push("/screens/registerfinal?type=restaurant");
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userDocRef);
+
+      if (userSnap.exists() && userSnap.data().isGoogleUser) {
+        router.replace("/home");
+      } else {
+        router.push("/screens/registerfinal?type=restaurant");
+      }
+    } catch (error: any) {
+      showModal("Erro ao prosseguir: " + (error?.message || ""));
+    }
   };
 
   const handlePickCardapio = async () => {
@@ -223,7 +239,7 @@ export default function RegisterRestaurantOperationalScreen() {
               style={[
                 styles.infoText,
                 { fontSize: 12 },
-                diasFuncionamento[dia] && { color: "#fff", fontWeight: "700" },
+                diasFuncionamento[dia] && { color: "white", fontWeight: "700" },
               ]}
             >
               {" "}
